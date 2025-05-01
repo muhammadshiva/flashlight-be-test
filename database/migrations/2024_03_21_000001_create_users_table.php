@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('email')->unique();
-            $table->string('phone_number');
+            $table->string('phone_number')->nullable();
             $table->text('address')->nullable();
             $table->boolean('is_member')->default(false);
             $table->foreignId('membership_type_id')->nullable()->constrained()->onDelete('set null');
