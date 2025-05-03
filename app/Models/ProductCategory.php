@@ -7,15 +7,21 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class ServiceTypeCategory extends Model
+class ProductCategory extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $fillable = ['name', 'image'];
+    protected $table = 'service_type_categories';
 
-    public function serviceTypes(): HasMany
+    protected $fillable = [
+        'name',
+        'description',
+        'image',
+    ];
+
+    public function products(): HasMany
     {
-        return $this->hasMany(ServiceType::class, 'category_id');
+        return $this->hasMany(Product::class, 'category_id');
     }
 
     public function getImageUrlAttribute(): ?string

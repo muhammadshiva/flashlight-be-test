@@ -15,14 +15,14 @@ return new class extends Migration {
             $table->timestamps();
         });
 
-        Schema::table('service_types', function (Blueprint $table) {
+        Schema::table('products', function (Blueprint $table) {
             $table->foreignId('category_id')->nullable()->constrained('service_type_categories')->nullOnDelete();
         });
     }
 
     public function down(): void
     {
-        Schema::table('service_types', function (Blueprint $table) {
+        Schema::table('products', function (Blueprint $table) {
             $table->dropForeign(['category_id']);
             $table->dropColumn('category_id');
         });

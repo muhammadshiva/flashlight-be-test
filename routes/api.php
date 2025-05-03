@@ -1,12 +1,11 @@
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\MembershipTypeController;
-use App\Http\Controllers\Api\ServiceTypeCategoryController;
-use App\Http\Controllers\Api\ServiceTypeController;
+use App\Http\Controllers\Api\ProductCategoryController;
+use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\StaffController;
 use App\Http\Controllers\Api\UserVehicleController;
 use App\Http\Controllers\Api\VehicleController;
@@ -63,16 +62,30 @@ Route::middleware('auth:sanctum')->group(function () {
 
     /*
     |--------------------------------------------------------------------------
-    | Service Management Routes
+    | Product Management Routes
     |--------------------------------------------------------------------------
     */
-    Route::prefix('services')->group(function () {
-        Route::get('/', [ServiceTypeController::class, 'index']);
-        Route::post('/', [ServiceTypeController::class, 'store']);
-        Route::get('/{id}', [ServiceTypeController::class, 'show']);
-        Route::put('/{id}', [ServiceTypeController::class, 'update']);
-        Route::delete('/{id}', [ServiceTypeController::class, 'destroy']);
-        Route::post('/{id}/restore', [ServiceTypeController::class, 'restore']);
+    Route::prefix('products')->group(function () {
+        Route::get('/', [ProductController::class, 'index']);
+        Route::post('/', [ProductController::class, 'store']);
+        Route::get('/{id}', [ProductController::class, 'show']);
+        Route::put('/{id}', [ProductController::class, 'update']);
+        Route::delete('/{id}', [ProductController::class, 'destroy']);
+        Route::post('/{id}/restore', [ProductController::class, 'restore']);
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Product Category Management Routes
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('product-categories')->group(function () {
+        Route::get('/', [ProductCategoryController::class, 'index']);
+        Route::post('/', [ProductCategoryController::class, 'store']);
+        Route::get('/{id}', [ProductCategoryController::class, 'show']);
+        Route::put('/{id}', [ProductCategoryController::class, 'update']);
+        Route::delete('/{id}', [ProductCategoryController::class, 'destroy']);
+        Route::post('/{id}/restore', [ProductCategoryController::class, 'restore']);
     });
 
     /*
@@ -131,19 +144,5 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('washes/{id}/complete', [WashTransactionController::class, 'complete']);
         Route::post('washes/{id}/cancel', [WashTransactionController::class, 'cancel']);
         Route::delete('washes/{id}', [WashTransactionController::class, 'destroy']);
-    });
-
-    /*
-    |--------------------------------------------------------------------------
-    | Service Type Category Routes
-    |--------------------------------------------------------------------------
-    */
-    Route::prefix('service-categories')->group(function () {
-        Route::get('/', [ServiceTypeCategoryController::class, 'index']);
-        Route::post('/', [ServiceTypeCategoryController::class, 'store']);
-        Route::get('/{id}', [ServiceTypeCategoryController::class, 'show']);
-        Route::put('/{id}', [ServiceTypeCategoryController::class, 'update']);
-        Route::delete('/{id}', [ServiceTypeCategoryController::class, 'destroy']);
-        Route::post('/{id}/restore', [ServiceTypeCategoryController::class, 'restore']);
     });
 });

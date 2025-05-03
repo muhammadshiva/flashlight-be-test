@@ -2,9 +2,8 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\ServiceTypeResource\Pages;
-use App\Filament\Resources\ServiceTypeResource\RelationManagers;
-use App\Models\ServiceType;
+use App\Filament\Resources\ProductCategoryResource\Pages;
+use App\Models\ProductCategory;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -12,11 +11,10 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Illuminate\Support\Facades\Storage;
 
-class ServiceTypeResource extends Resource
+class ProductCategoryResource extends Resource
 {
-    protected static ?string $model = ServiceType::class;
+    protected static ?string $model = ProductCategory::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
@@ -24,27 +22,15 @@ class ServiceTypeResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Select::make('service_type_category_id')
-                    ->label('Service Category')
-                    ->relationship('category', 'name')
-                    ->searchable()
-                    ->preload()
-                    ->required(),
-
                 Forms\Components\TextInput::make('name')
                     ->required()
                     ->maxLength(255)
-                    ->label('Service Name'),
-
-                Forms\Components\TextInput::make('price')
-                    ->required()
-                    ->numeric()
-                    ->prefix('$')
-                    ->label('Price'),
+                    ->label('Category Name'),
 
                 Forms\Components\FileUpload::make('image')
+                    ->label('Category Image')
                     ->image()
-                    ->directory('service-types')
+                    ->directory('service-type-categories')
                     ->preserveFilenames()
                     ->maxSize(2048)
                     ->imagePreviewHeight('250')
@@ -53,8 +39,7 @@ class ServiceTypeResource extends Resource
                     ->panelLayout('integrated')
                     ->removeUploadedFileButtonPosition('right')
                     ->uploadButtonPosition('left')
-                    ->uploadProgressIndicatorPosition('left')
-                    ->label('Service Image'),
+                    ->uploadProgressIndicatorPosition('left'),
             ]);
     }
 
@@ -68,25 +53,26 @@ class ServiceTypeResource extends Resource
                     ->defaultImageUrl(fn($record) => $record?->image_url)
                     ->url(fn($record) => $record?->image_url)
                     ->openUrlInNewTab(),
+
                 Tables\Columns\TextColumn::make('name')
-                    ->searchable()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('category.name')
-                    ->label('Category')
+                    ->label('Name')
                     ->sortable()
                     ->searchable(),
-                Tables\Columns\TextColumn::make('price')
-                    ->money('USD')
-                    ->sortable(),
+
                 Tables\Columns\TextColumn::make('created_at')
+                    ->label('Created At')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+
                 Tables\Columns\TextColumn::make('updated_at')
+                    ->label('Updated At')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+
                 Tables\Columns\TextColumn::make('deleted_at')
+                    ->label('Deleted At')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -104,22 +90,23 @@ class ServiceTypeResource extends Resource
                     Tables\Actions\DeleteBulkAction::make(),
                     Tables\Actions\RestoreBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->defaultSort('created_at', 'name');
     }
 
     public static function getRelations(): array
     {
         return [
-            //
+            // Optional RelationManager for service types can go here
         ];
     }
 
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListServiceTypes::route('/'),
-            'create' => Pages\CreateServiceType::route('/create'),
-            'edit' => Pages\EditServiceType::route('/{record}/edit'),
+            'index' => Pages\ListProductCategories::route('/'),
+            'create' => Pages\CreateProductCategory::route('/create'),
+            'edit' => Pages\EditProductCategory::route('/{record}/edit'),
         ];
     }
 }

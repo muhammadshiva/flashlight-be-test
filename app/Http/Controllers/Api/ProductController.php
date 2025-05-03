@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\ServiceType;
+use App\Models\Product;
 use App\Traits\ApiResponse;
 use Exception;
 use Illuminate\Http\Request;
@@ -11,15 +11,15 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
-class ServiceTypeController extends Controller
+class ProductController extends Controller
 {
     use ApiResponse;
 
     public function index()
     {
         try {
-            $serviceTypes = ServiceType::withTrashed()->get();
-            return $this->successResponse($serviceTypes, 'Service types retrieved successfully');
+            $products = Product::withTrashed()->get();
+            return $this->successResponse($products, 'Products retrieved successfully');
         } catch (Exception $e) {
             return $this->handleException($e);
         }
@@ -30,8 +30,10 @@ class ServiceTypeController extends Controller
         try {
             $validator = Validator::make($request->all(), [
                 'name' => 'required|string|max:255',
-                'price' => 'required|numeric',
+                'description' => 'nullable|string',
+                'price' => 'required|numeric|min:0',
                 'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+                'category_id' => 'nullable|exists:service_type_categories,id',
             ]);
 
             if ($validator->fails()) {
@@ -43,14 +45,14 @@ class ServiceTypeController extends Controller
             $data = $request->all();
 
             if ($request->hasFile('image')) {
-                $path = $request->file('image')->store('service-types', 'public');
+                $path = $request->file('image')->store('products', 'public');
                 $data['image'] = $path;
             }
 
-            $serviceType = ServiceType::create($data);
+            $product = Product::create($data);
 
             DB::commit();
-            return $this->successResponse($serviceType, 'Service type created successfully', 201);
+            return $this->successResponse($product, 'Product created successfully', 201);
         } catch (Exception $e) {
             DB::rollBack();
             // Clean up uploaded file if transaction fails
@@ -61,22 +63,24 @@ class ServiceTypeController extends Controller
         }
     }
 
-    public function show(ServiceType $serviceType)
+    public function show(Product $product)
     {
         try {
-            return $this->successResponse($serviceType, 'Service type retrieved successfully');
+            return $this->successResponse($product, 'Product retrieved successfully');
         } catch (Exception $e) {
             return $this->handleException($e);
         }
     }
 
-    public function update(Request $request, ServiceType $serviceType)
+    public function update(Request $request, Product $product)
     {
         try {
             $validator = Validator::make($request->all(), [
-                'name' => 'required|string|max:255',
-                'price' => 'required|numeric',
+                'name' => 'sometimes|required|string|max:255',
+                'description' => 'nullable|string',
+                'price' => 'sometimes|required|numeric|min:0',
                 'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+                'category_id' => 'nullable|exists:service_type_categories,id',
             ]);
 
             if ($validator->fails()) {
@@ -86,14 +90,14 @@ class ServiceTypeController extends Controller
             DB::beginTransaction();
 
             $data = $request->all();
-            $oldImage = $serviceType->image;
+            $oldImage = $product->image;
 
             if ($request->hasFile('image')) {
-                $path = $request->file('image')->store('service-types', 'public');
+                $path = $request->file('image')->store('products', 'public');
                 $data['image'] = $path;
             }
 
-            $serviceType->update($data);
+            $product->update($data);
 
             // Delete old image after successful update
             if ($request->hasFile('image') && $oldImage) {
@@ -101,7 +105,7 @@ class ServiceTypeController extends Controller
             }
 
             DB::commit();
-            return $this->successResponse($serviceType, 'Service type updated successfully');
+            return $this->successResponse($product, 'Product updated successfully');
         } catch (Exception $e) {
             DB::rollBack();
             // Clean up uploaded file if transaction fails
@@ -112,20 +116,20 @@ class ServiceTypeController extends Controller
         }
     }
 
-    public function destroy(ServiceType $serviceType)
+    public function destroy(Product $product)
     {
         try {
             DB::beginTransaction();
 
-            $imagePath = $serviceType->image;
-            $serviceType->delete();
+            $imagePath = $product->image;
+            $product->delete();
 
             if ($imagePath) {
                 Storage::disk('public')->delete($imagePath);
             }
 
             DB::commit();
-            return $this->successResponse(null, 'Service type deleted successfully', 204);
+            return $this->successResponse(null, 'Product deleted successfully', 204);
         } catch (Exception $e) {
             DB::rollBack();
             return $this->handleException($e);
@@ -137,11 +141,11 @@ class ServiceTypeController extends Controller
         try {
             DB::beginTransaction();
 
-            $serviceType = ServiceType::withTrashed()->findOrFail($id);
-            $serviceType->restore();
+            $product = Product::withTrashed()->findOrFail($id);
+            $product->restore();
 
             DB::commit();
-            return $this->successResponse($serviceType, 'Service type restored successfully');
+            return $this->successResponse($product, 'Product restored successfully');
         } catch (Exception $e) {
             DB::rollBack();
             return $this->handleException($e);

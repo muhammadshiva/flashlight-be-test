@@ -35,8 +35,8 @@ class WashTransactionResource extends Resource
                     ->preload()
                     ->required()
                     ->label('Vehicle'),
-                Forms\Components\Select::make('service_type_id')
-                    ->relationship('serviceType', 'name')
+                Forms\Components\Select::make('product_id')
+                    ->relationship('product', 'name')
                     ->searchable()
                     ->preload()
                     ->required()
@@ -65,7 +65,7 @@ class WashTransactionResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->label('Vehicle'),
-                Tables\Columns\TextColumn::make('serviceType.name')
+                Tables\Columns\TextColumn::make('product.name')
                     ->searchable()
                     ->sortable()
                     ->label('Service Type'),

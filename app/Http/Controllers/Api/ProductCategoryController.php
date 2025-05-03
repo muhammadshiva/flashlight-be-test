@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\ServiceTypeCategory;
+use App\Models\ProductCategory;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -11,14 +11,14 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Exception;
 
-class ServiceTypeCategoryController extends Controller
+class ProductCategoryController extends Controller
 {
     use ApiResponse;
 
     public function index()
     {
         try {
-            $categories = ServiceTypeCategory::withTrashed()->get();
+            $categories = ProductCategory::withTrashed()->get();
             return $this->successResponse($categories, 'Categories retrieved');
         } catch (Exception $e) {
             return $this->handleException($e);
@@ -44,7 +44,7 @@ class ServiceTypeCategoryController extends Controller
                 $data['image'] = $request->file('image')->store('service-type-categories', 'public');
             }
 
-            $category = ServiceTypeCategory::create($data);
+            $category = ProductCategory::create($data);
             DB::commit();
 
             return $this->successResponse($category, 'Category created', 201);
@@ -54,12 +54,12 @@ class ServiceTypeCategoryController extends Controller
         }
     }
 
-    public function show(ServiceTypeCategory $serviceTypeCategory)
+    public function show(ProductCategory $productCategory)
     {
-        return $this->successResponse($serviceTypeCategory, 'Category details');
+        return $this->successResponse($productCategory, 'Category details');
     }
 
-    public function update(Request $request, ServiceTypeCategory $serviceTypeCategory)
+    public function update(Request $request, ProductCategory $productCategory)
     {
         try {
             $validator = Validator::make($request->all(), [
@@ -75,25 +75,25 @@ class ServiceTypeCategoryController extends Controller
             $data = $request->only(['name']);
 
             if ($request->hasFile('image')) {
-                $oldImage = $serviceTypeCategory->image;
-                $data['image'] = $request->file('image')->store('service-type-categories', 'public');
+                $oldImage = $productCategory->image;
+                $data['image'] = $request->file('image')->store('product-categories', 'public');
                 if ($oldImage) Storage::disk('public')->delete($oldImage);
             }
 
-            $serviceTypeCategory->update($data);
+            $productCategory->update($data);
             DB::commit();
 
-            return $this->successResponse($serviceTypeCategory, 'Category updated');
+            return $this->successResponse($productCategory, 'Category updated');
         } catch (Exception $e) {
             DB::rollBack();
             return $this->handleException($e);
         }
     }
 
-    public function destroy(ServiceTypeCategory $serviceTypeCategory)
+    public function destroy(ProductCategory $productCategory)
     {
         try {
-            $serviceTypeCategory->delete();
+            $productCategory->delete();
             return $this->successResponse(null, 'Category deleted', 204);
         } catch (Exception $e) {
             return $this->handleException($e);
@@ -103,7 +103,7 @@ class ServiceTypeCategoryController extends Controller
     public function restore($id)
     {
         try {
-            $category = ServiceTypeCategory::withTrashed()->findOrFail($id);
+            $category = ProductCategory::withTrashed()->findOrFail($id);
             $category->restore();
             return $this->successResponse($category, 'Category restored');
         } catch (Exception $e) {

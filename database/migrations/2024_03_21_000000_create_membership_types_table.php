@@ -14,6 +14,7 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->decimal('price', 10, 2);
             $table->integer('duration_days');
+            $table->integer('max_wash_per_month');
             $table->json('benefits')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();

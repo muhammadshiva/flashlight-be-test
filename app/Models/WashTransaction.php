@@ -32,9 +32,9 @@ class WashTransaction extends Model
         return $this->belongsTo(Vehicle::class);
     }
 
-    public function serviceType(): BelongsTo
+    public function product(): BelongsTo
     {
-        return $this->belongsTo(ServiceType::class);
+        return $this->belongsTo(Product::class);
     }
 
     public function staff(): BelongsTo
