@@ -6,32 +6,27 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    public function up()
+    public function up(): void
     {
-        Schema::create('users', function (Blueprint $table) {
+        Schema::create('customers', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('email')->nullable()->unique();
-            $table->string('phone_number')->unique();
-            $table->string('password')->nullable();
-            $table->string('address')->nullable();
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->text('address')->nullable();
             $table->string('city')->nullable();
             $table->string('state')->nullable();
             $table->string('postal_code')->nullable();
             $table->string('country')->nullable();
-            $table->string('profile_image')->nullable();
-            $table->foreignId('membership_type_id')->nullable()->constrained('membership_types');
+            $table->foreignId('membership_type_id')->nullable()->constrained('membership_types')->onDelete('set null');
             $table->timestamp('membership_expires_at')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamp('last_login_at')->nullable();
-            $table->rememberToken();
             $table->timestamps();
             $table->softDeletes();
         });
     }
 
-    public function down()
+    public function down(): void
     {
-        Schema::dropIfExists('users');
+        Schema::dropIfExists('customers');
     }
 };

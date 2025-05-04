@@ -18,22 +18,35 @@ class ProductController extends Controller
     public function index()
     {
         try {
-            $products = Product::withTrashed()->get();
+            $products = Product::get()->map(function ($product) {
+                return [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'price' => $product->price,
+                    'image' => $product->image,
+                    'category_id' => $product->category_id,
+                    'is_active' => $product->is_active,
+                    'updated_at' => $product->updated_at,
+                    'created_at' => $product->created_at,
+                ];
+            });
+
             return $this->successResponse($products, 'Products retrieved successfully');
         } catch (Exception $e) {
             return $this->handleException($e);
         }
     }
 
+
     public function store(Request $request)
     {
         try {
             $validator = Validator::make($request->all(), [
                 'name' => 'required|string|max:255',
-                'description' => 'nullable|string',
                 'price' => 'required|numeric|min:0',
                 'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-                'category_id' => 'nullable|exists:service_type_categories,id',
+                'category_id' => 'nullable|exists:product_categories,id',
+                'is_active' => 'required|boolean',
             ]);
 
             if ($validator->fails()) {
@@ -80,7 +93,8 @@ class ProductController extends Controller
                 'description' => 'nullable|string',
                 'price' => 'sometimes|required|numeric|min:0',
                 'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-                'category_id' => 'nullable|exists:service_type_categories,id',
+                'category_id' => 'nullable|exists:product_categories,id',
+                'is_active' => 'required|boolean',
             ]);
 
             if ($validator->fails()) {

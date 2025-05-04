@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->foreignId('vehicle_id')->constrained()->onDelete('cascade');
-            $table->foreignId('service_type_id')->constrained()->onDelete('restrict');
+            $table->foreignId('product_id')->constrained()->onDelete('restrict');
             $table->foreignId('staff_id')->constrained()->onDelete('restrict');
             $table->dateTime('wash_date');
             $table->timestamps();

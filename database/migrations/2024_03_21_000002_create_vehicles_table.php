@@ -13,9 +13,9 @@ return new class extends Migration
     {
         Schema::create('vehicles', function (Blueprint $table) {
             $table->id();
-            $table->string('brand');
-            $table->string('model');
-            $table->string('vehicle_type');
+            $table->string('brand')->nullable();
+            $table->string('model')->nullable();
+            $table->string('vehicle_type')->nullable();
             $table->softDeletes();
             $table->timestamps();
         });

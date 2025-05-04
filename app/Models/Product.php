@@ -21,10 +21,15 @@ class Product extends Model
         'price',
         'image',
         'category_id',
+        'is_active',
     ];
 
     protected $appends = [
         'image_url',
+    ];
+
+    protected $casts = [
+        'is_active' => 'boolean',
     ];
 
     public function washTransactions(): HasMany
@@ -47,6 +52,6 @@ class Product extends Model
 
     public function category(): BelongsTo
     {
-        return $this->belongsTo(ServiceTypeCategory::class, 'category_id');
+        return $this->belongsTo(ProductCategory::class, 'category_id');
     }
 }

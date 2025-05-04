@@ -26,38 +26,33 @@ class UserResource extends Resource
             ->schema([
                 Forms\Components\TextInput::make('name')
                     ->required()
-                    ->maxLength(255)
-                    ->label('Full Name'),
+                    ->maxLength(255),
                 Forms\Components\TextInput::make('email')
                     ->email()
                     ->required()
-                    ->maxLength(255)
-                    ->unique(ignoreRecord: true)
-                    ->label('Email Address'),
+                    ->maxLength(255),
                 Forms\Components\TextInput::make('phone_number')
                     ->tel()
-                    ->maxLength(20)
-                    ->label('Phone Number'),
-                Forms\Components\Textarea::make('address')
-                    ->maxLength(65535)
-                    ->columnSpanFull()
-                    ->label('Address'),
-                Forms\Components\Toggle::make('is_member')
-                    ->required()
-                    ->label('Is Member'),
-                Forms\Components\Select::make('membership_type_id')
-                    ->relationship('membershipType', 'type_name')
-                    ->searchable()
-                    ->preload()
-                    ->label('Membership Type'),
-                Forms\Components\DatePicker::make('join_date')
-                    ->label('Join Date'),
+                    ->maxLength(20),
+                Forms\Components\Select::make('type')
+                    ->options([
+                        'admin' => 'Admin',
+                        'customer' => 'Customer',
+                        'staff' => 'Staff',
+                    ])
+                    ->required(),
+                Forms\Components\FileUpload::make('profile_image')
+                    ->image()
+                    ->directory('profile-images'),
                 Forms\Components\TextInput::make('password')
                     ->password()
-                    ->dehydrateStateUsing(fn($state) => Hash::make($state))
-                    ->dehydrated(fn($state) => filled($state))
-                    ->required(fn(string $context): bool => $context === 'create')
-                    ->label('Password'),
+                    ->required(fn(string $operation): bool => $operation === 'create')
+                    ->minLength(8)
+                    ->same('password_confirmation'),
+                Forms\Components\TextInput::make('password_confirmation')
+                    ->password()
+                    ->required(fn(string $operation): bool => $operation === 'create')
+                    ->minLength(8),
             ]);
     }
 
@@ -65,24 +60,21 @@ class UserResource extends Resource
     {
         return $table
             ->columns([
+                Tables\Columns\ImageColumn::make('profile_image')
+                    ->circular(),
                 Tables\Columns\TextColumn::make('name')
-                    ->searchable()
-                    ->sortable(),
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('email')
-                    ->searchable()
-                    ->sortable(),
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('phone_number')
-                    ->searchable()
-                    ->sortable(),
-                Tables\Columns\IconColumn::make('is_member')
-                    ->boolean()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('membershipType.type_name')
-                    ->searchable()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('join_date')
-                    ->date()
-                    ->sortable(),
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('type')
+                    ->badge()
+                    ->color(fn(string $state): string => match ($state) {
+                        'admin' => 'danger',
+                        'customer' => 'success',
+                        'staff' => 'warning',
+                    }),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -93,15 +85,26 @@ class UserResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                Tables\Filters\SelectFilter::make('type')
+                    ->options([
+                        'admin' => 'Admin',
+                        'customer' => 'Customer',
+                        'staff' => 'Staff',
+                    ]),
+                Tables\Filters\TrashedFilter::make(),
             ])
             ->actions([
+                Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
+                Tables\Actions\ForceDeleteAction::make(),
+                Tables\Actions\RestoreAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\ForceDeleteBulkAction::make(),
+                    Tables\Actions\RestoreBulkAction::make(),
                 ]),
             ]);
     }
@@ -120,5 +123,13 @@ class UserResource extends Resource
             'create' => Pages\CreateUser::route('/create'),
             'edit' => Pages\EditUser::route('/{record}/edit'),
         ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->withoutGlobalScopes([
+                SoftDeletingScope::class,
+            ]);
     }
 }

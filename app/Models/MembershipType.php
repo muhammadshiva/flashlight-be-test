@@ -20,7 +20,7 @@ class MembershipType extends Model
     ];
 
     protected $casts = [
-        'price' => 'decimal:2',
+        'price' => 'float',
         'duration_days' => 'integer',
         'benefits' => 'array',
         'is_active' => 'boolean'

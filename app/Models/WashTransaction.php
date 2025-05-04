@@ -11,9 +11,9 @@ class WashTransaction extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id',
-        'vehicle_id',
-        'service_type_id',
+        'customer_id',
+        'customer_vehicle_id',
+        'product_id',
         'staff_id',
         'wash_date',
     ];
@@ -22,14 +22,14 @@ class WashTransaction extends Model
         'wash_date' => 'datetime',
     ];
 
-    public function user(): BelongsTo
+    public function customer(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Customer::class);
     }
 
-    public function vehicle(): BelongsTo
+    public function customerVehicle(): BelongsTo
     {
-        return $this->belongsTo(Vehicle::class);
+        return $this->belongsTo(CustomerVehicle::class);
     }
 
     public function product(): BelongsTo

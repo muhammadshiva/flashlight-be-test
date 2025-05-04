@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        Schema::create('service_type_categories', function (Blueprint $table) {
+        Schema::create('product_categories', function (Blueprint $table) {
             $table->id();
             $table->string('name');
             $table->string('image')->nullable();
@@ -16,7 +16,7 @@ return new class extends Migration {
         });
 
         Schema::table('products', function (Blueprint $table) {
-            $table->foreignId('category_id')->nullable()->constrained('service_type_categories')->nullOnDelete();
+            $table->foreignId('category_id')->nullable()->constrained('product_categories')->nullOnDelete();
         });
     }
 
@@ -27,6 +27,6 @@ return new class extends Migration {
             $table->dropColumn('category_id');
         });
 
-        Schema::dropIfExists('service_type_categories');
+        Schema::dropIfExists('product_categories');
     }
 };

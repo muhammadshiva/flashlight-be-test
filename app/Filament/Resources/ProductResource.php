@@ -13,6 +13,8 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\Storage;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Actions\Action;
 
 class ProductResource extends Resource
 {
@@ -33,20 +35,35 @@ class ProductResource extends Resource
                 Forms\Components\TextInput::make('name')
                     ->required()
                     ->maxLength(255),
-                Forms\Components\Textarea::make('description')
-                    ->maxLength(65535)
-                    ->columnSpanFull(),
                 Forms\Components\TextInput::make('price')
                     ->required()
                     ->numeric()
-                    ->prefix('$'),
+                    ->prefix('Rp'),
                 Forms\Components\FileUpload::make('image')
                     ->image()
                     ->directory('products'),
                 Forms\Components\Select::make('category_id')
                     ->relationship('category', 'name')
                     ->searchable()
-                    ->preload(),
+                    ->preload()
+                    ->createOptionForm([
+                        Forms\Components\TextInput::make('name')
+                            ->required()
+                            ->maxLength(255),
+                        Forms\Components\FileUpload::make('image')
+                            ->image()
+                            ->directory('product-categories'),
+                    ])
+                    ->suffixAction(
+                        Action::make('manageCategories')
+                            ->icon('heroicon-o-cog')
+                            ->url(fn() => route('filament.admin.resources.product-categories.index'))
+                            ->openUrlInNewTab()
+                    )
+                    ->helperText('No categories? Click the gear icon to manage categories.')
+                    ->required(),
+                Forms\Components\Toggle::make('is_active')
+                    ->required(),
             ]);
     }
 
@@ -57,7 +74,8 @@ class ProductResource extends Resource
                 Tables\Columns\TextColumn::make('name')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('price')
-                    ->money()
+                    ->numeric()
+                    ->prefix('Rp')
                     ->sortable(),
                 Tables\Columns\ImageColumn::make('image'),
                 Tables\Columns\TextColumn::make('category.name')

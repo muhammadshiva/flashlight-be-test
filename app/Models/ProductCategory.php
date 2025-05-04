@@ -11,7 +11,7 @@ class ProductCategory extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $table = 'service_type_categories';
+    protected $table = 'product_categories';
 
     protected $fillable = [
         'name',
@@ -30,6 +30,4 @@ class ProductCategory extends Model
         if (str_starts_with($this->image, 'http')) return $this->image;
         return asset('storage/' . $this->image);
     }
-
-    protected $appends = ['image_url'];
 }

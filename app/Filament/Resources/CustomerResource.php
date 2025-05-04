@@ -2,9 +2,8 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\StaffResource\Pages;
-use App\Filament\Resources\StaffResource\RelationManagers;
-use App\Models\Staff;
+use App\Filament\Resources\CustomerResource\Pages;
+use App\Models\Customer;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -13,17 +12,17 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
-class StaffResource extends Resource
+class CustomerResource extends Resource
 {
-    protected static ?string $model = Staff::class;
+    protected static ?string $model = Customer::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-briefcase';
+    protected static ?string $navigationIcon = 'heroicon-o-user-group';
 
-    protected static ?string $navigationLabel = 'Staff';
+    protected static ?string $navigationLabel = 'Customers';
 
-    protected static ?string $modelLabel = 'Staff Member';
+    protected static ?string $modelLabel = 'Customer';
 
-    protected static ?string $pluralModelLabel = 'Staff Members';
+    protected static ?string $pluralModelLabel = 'Customers';
 
     public static function form(Form $form): Form
     {
@@ -34,17 +33,24 @@ class StaffResource extends Resource
                     ->searchable()
                     ->preload()
                     ->required(),
-                Forms\Components\TextInput::make('position')
-                    ->maxLength(255),
-                Forms\Components\TextInput::make('salary')
-                    ->numeric()
-                    ->prefix('$'),
-                Forms\Components\DatePicker::make('hire_date'),
-                Forms\Components\Toggle::make('is_active')
-                    ->required(),
-                Forms\Components\Textarea::make('notes')
+                Forms\Components\Textarea::make('address')
                     ->maxLength(65535)
                     ->columnSpanFull(),
+                Forms\Components\TextInput::make('city')
+                    ->maxLength(255),
+                Forms\Components\TextInput::make('state')
+                    ->maxLength(255),
+                Forms\Components\TextInput::make('postal_code')
+                    ->maxLength(255),
+                Forms\Components\TextInput::make('country')
+                    ->maxLength(255),
+                Forms\Components\Select::make('membership_type_id')
+                    ->relationship('membershipType', 'name')
+                    ->searchable()
+                    ->preload(),
+                Forms\Components\DateTimePicker::make('membership_expires_at'),
+                Forms\Components\Toggle::make('is_active')
+                    ->required(),
             ]);
     }
 
@@ -54,14 +60,16 @@ class StaffResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('user.name')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('position')
+                Tables\Columns\TextColumn::make('city')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('salary')
-                    ->money()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('hire_date')
-                    ->date()
-                    ->sortable(),
+                Tables\Columns\TextColumn::make('state')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('postal_code')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('country')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('membershipType.name')
+                    ->searchable(),
                 Tables\Columns\IconColumn::make('is_active')
                     ->boolean(),
                 Tables\Columns\TextColumn::make('created_at')
@@ -102,9 +110,9 @@ class StaffResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListStaff::route('/'),
-            'create' => Pages\CreateStaff::route('/create'),
-            'edit' => Pages\EditStaff::route('/{record}/edit'),
+            'index' => Pages\ListCustomers::route('/'),
+            'create' => Pages\CreateCustomer::route('/create'),
+            'edit' => Pages\EditCustomer::route('/{record}/edit'),
         ];
     }
 

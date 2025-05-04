@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->text('description')->nullable();
-            $table->decimal('price', 10, 2);
+            $table->float('price');
             $table->integer('duration_days');
             $table->integer('max_wash_per_month');
             $table->json('benefits')->nullable();

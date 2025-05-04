@@ -4,6 +4,8 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\Customer;
+use App\Models\Staff;
 use App\Traits\ApiResponse;
 use Exception;
 use Illuminate\Http\Request;
@@ -12,6 +14,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rules\Password;
 
 class UserController extends Controller
 {
@@ -20,93 +23,77 @@ class UserController extends Controller
     public function index()
     {
         try {
-            $users = User::all();
+            $users = User::with(['customer', 'staff'])->get();
             return $this->successResponse($users, 'Users retrieved successfully');
         } catch (Exception $e) {
             return $this->handleException($e);
         }
     }
 
+    /**
+     * Create a new user
+     *
+     * Example JSON request:
+     * {
+     *     "name": "John Doe",
+     *     "email": "john@example.com",  // optional
+     *     "phone_number": "+1234567890", // optional
+     *     "password": "password123",     // optional
+     *     "password_confirmation": "password123", // required if password is provided
+     *     "type": "customer",            // optional, can be: admin, customer, staff
+     *     "profile_image": "file"        // optional, image file
+     * }
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function store(Request $request)
     {
         try {
             $validator = Validator::make($request->all(), [
                 'name' => 'required|string|max:255',
-                'email' => 'nullable|email|unique:users',
-                'phone_number' => 'required|string|unique:users',
-                'password' => 'nullable|string|min:6',
-                'address' => 'nullable|string',
-                'city' => 'nullable|string',
-                'state' => 'nullable|string',
-                'postal_code' => 'nullable|string',
-                'country' => 'nullable|string',
+                'email' => 'nullable|string|email|max:255|unique:users',
+                'phone_number' => 'nullable|string|max:20',
+                'password' => ['nullable', 'confirmed', Password::defaults()],
+                'type' => 'required|in:admin,customer,staff',
                 'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-                'membership_type_id' => 'nullable|exists:membership_types,id',
-                'membership_expires_at' => 'nullable|date',
-                'is_active' => 'boolean'
             ]);
 
             if ($validator->fails()) {
-                // Check if the error is about the phone number being taken
-                if (
-                    $validator->errors()->has('phone_number') &&
-                    in_array('The phone number has already been taken.', $validator->errors()->get('phone_number'))
-                ) {
-                    $existingUser = User::where('phone_number', $request->phone_number)->first();
-
-                    if ($existingUser) {
-                        $response = [
-                            'id' => $existingUser->id,
-                            'name' => $existingUser->name,
-                            'phone_number' => $existingUser->phone_number,
-                            'updated_at' => $existingUser->updated_at,
-                            'created_at' => $existingUser->created_at,
-                        ];
-                        return $this->successResponse($response, 'Phone number already exists, returning existing user.', 201);
-                    }
-                }
-
                 return $this->validationErrorResponse($validator->errors());
             }
 
-            DB::beginTransaction();
-
-            $data = $request->all();
-            if (isset($data['password'])) {
-                $data['password'] = Hash::make($data['password']);
+            $userData = $request->only(['name', 'email', 'phone_number', 'type']);
+            if ($request->has('password')) {
+                $userData['password'] = Hash::make($request->password);
             }
 
             if ($request->hasFile('profile_image')) {
-                $path = $request->file('profile_image')->store('users', 'public');
-                $data['profile_image'] = $path;
+                $userData['profile_image'] = $request->file('profile_image')->store('profile-images', 'public');
             }
 
-            $user = User::create($data);
+            $user = User::create($userData);
 
-            DB::commit();
+            // Create related record based on user type
+            if ($request->type === 'customer') {
+                $this->createCustomer($user->id, $request);
+            } elseif ($request->type === 'staff') {
+                $this->createStaff($user->id, $request);
+            }
 
-            $response = [
-                'id' => $user->id,
-                'name' => $user->name,
-                'phone_number' => $user->phone_number,
-                'updated_at' => $user->updated_at,
-                'created_at' => $user->created_at,
-            ];
-            return $this->successResponse($response, 'User fetched successfully', 201);
+            return $this->successResponse($user->load(['customer', 'staff']), 'User created successfully', 201);
         } catch (Exception $e) {
-            DB::rollBack();
-            if (isset($path)) {
-                Storage::disk('public')->delete($path);
+            if (isset($userData['profile_image'])) {
+                Storage::disk('public')->delete($userData['profile_image']);
             }
             return $this->handleException($e);
         }
     }
 
-
     public function show(User $user)
     {
         try {
-            return $this->successResponse($user, 'User retrieved successfully');
+            return $this->successResponse($user->load(['customer', 'staff']), 'User retrieved successfully');
         } catch (Exception $e) {
             return $this->handleException($e);
         }
@@ -117,49 +104,39 @@ class UserController extends Controller
         try {
             $validator = Validator::make($request->all(), [
                 'name' => 'sometimes|required|string|max:255',
-                'email' => 'nullable|email|unique:users,email,' . $user->id,
-                'phone_number' => 'sometimes|required|string|unique:users,phone_number,' . $user->id,
-                'password' => 'nullable|string|min:6',
-                'address' => 'nullable|string',
-                'city' => 'nullable|string',
-                'state' => 'nullable|string',
-                'postal_code' => 'nullable|string',
-                'country' => 'nullable|string',
+                'email' => 'sometimes|required|string|email|max:255|unique:users,email,' . $user->id,
+                'phone_number' => 'nullable|string|max:20',
+                'password' => ['sometimes', 'required', 'confirmed', Password::defaults()],
                 'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-                'membership_type_id' => 'nullable|exists:membership_types,id',
-                'membership_expires_at' => 'nullable|date',
-                'is_active' => 'boolean'
             ]);
 
             if ($validator->fails()) {
                 return $this->validationErrorResponse($validator->errors());
             }
 
-            DB::beginTransaction();
+            $userData = $request->only(['name', 'email', 'phone_number']);
 
-            $data = $request->all();
-            if (isset($data['password'])) {
-                $data['password'] = Hash::make($data['password']);
+            if ($request->has('password')) {
+                $userData['password'] = Hash::make($request->password);
             }
 
-            $oldImage = $user->profile_image;
             if ($request->hasFile('profile_image')) {
-                $path = $request->file('profile_image')->store('users', 'public');
-                $data['profile_image'] = $path;
+                $userData['profile_image'] = $request->file('profile_image')->store('profile-images', 'public');
             }
 
-            $user->update($data);
+            $user->update($userData);
 
-            if ($request->hasFile('profile_image') && $oldImage) {
-                Storage::disk('public')->delete($oldImage);
+            // Update related record if it exists
+            if ($user->isCustomer()) {
+                $this->updateCustomer($user->customer, $request);
+            } elseif ($user->isStaff()) {
+                $this->updateStaff($user->staff, $request);
             }
 
-            DB::commit();
-            return $this->successResponse($user, 'User updated successfully');
+            return $this->successResponse($user->load(['customer', 'staff']), 'User updated successfully');
         } catch (Exception $e) {
-            DB::rollBack();
-            if (isset($path)) {
-                Storage::disk('public')->delete($path);
+            if (isset($userData['profile_image'])) {
+                Storage::disk('public')->delete($userData['profile_image']);
             }
             return $this->handleException($e);
         }
@@ -272,5 +249,107 @@ class UserController extends Controller
             DB::rollBack();
             return $this->handleException($e);
         }
+    }
+
+    private function createCustomer($userId, Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'address' => 'nullable|string',
+            'city' => 'nullable|string',
+            'state' => 'nullable|string',
+            'postal_code' => 'nullable|string',
+            'country' => 'nullable|string',
+            'membership_type_id' => 'nullable|exists:membership_types,id',
+            'membership_expires_at' => 'nullable|date',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $customerData = $request->only([
+            'address',
+            'city',
+            'state',
+            'postal_code',
+            'country',
+            'membership_type_id',
+            'membership_expires_at'
+        ]);
+        $customerData['user_id'] = $userId;
+
+        return Customer::create($customerData);
+    }
+
+    private function createStaff($userId, Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'position' => 'nullable|string',
+            'salary' => 'nullable|numeric',
+            'hire_date' => 'nullable|date',
+            'notes' => 'nullable|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $staffData = $request->only(['position', 'salary', 'hire_date', 'notes']);
+        $staffData['user_id'] = $userId;
+        $staffData['is_active'] = true;
+
+        return Staff::create($staffData);
+    }
+
+    private function updateCustomer(Customer $customer, Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'address' => 'nullable|string',
+            'city' => 'nullable|string',
+            'state' => 'nullable|string',
+            'postal_code' => 'nullable|string',
+            'country' => 'nullable|string',
+            'membership_type_id' => 'nullable|exists:membership_types,id',
+            'membership_expires_at' => 'nullable|date',
+            'is_active' => 'nullable|boolean',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $customer->update($request->only([
+            'address',
+            'city',
+            'state',
+            'postal_code',
+            'country',
+            'membership_type_id',
+            'membership_expires_at',
+            'is_active'
+        ]));
+    }
+
+    private function updateStaff(Staff $staff, Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'position' => 'nullable|string',
+            'salary' => 'nullable|numeric',
+            'hire_date' => 'nullable|date',
+            'notes' => 'nullable|string',
+            'is_active' => 'nullable|boolean',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $staff->update($request->only([
+            'position',
+            'salary',
+            'hire_date',
+            'notes',
+            'is_active'
+        ]));
     }
 }

@@ -23,14 +23,14 @@ class WashTransactionResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Select::make('user_id')
-                    ->relationship('user', 'name')
+                Forms\Components\Select::make('customer_id')
+                    ->relationship('customer.user', 'name')
                     ->searchable()
                     ->preload()
                     ->required()
                     ->label('Customer'),
-                Forms\Components\Select::make('vehicle_id')
-                    ->relationship('vehicle', 'license_plate')
+                Forms\Components\Select::make('customer_vehicle_id')
+                    ->relationship('customerVehicle', 'license_plate')
                     ->searchable()
                     ->preload()
                     ->required()
@@ -42,7 +42,7 @@ class WashTransactionResource extends Resource
                     ->required()
                     ->label('Service Type'),
                 Forms\Components\Select::make('staff_id')
-                    ->relationship('staff', 'name')
+                    ->relationship('staff.user', 'name')
                     ->searchable()
                     ->preload()
                     ->nullable()
@@ -57,11 +57,11 @@ class WashTransactionResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('user.name')
+                Tables\Columns\TextColumn::make('customer.user.name')
                     ->searchable()
                     ->sortable()
                     ->label('Customer'),
-                Tables\Columns\TextColumn::make('vehicle.license_plate')
+                Tables\Columns\TextColumn::make('customerVehicle.license_plate')
                     ->searchable()
                     ->sortable()
                     ->label('Vehicle'),
@@ -69,7 +69,7 @@ class WashTransactionResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->label('Service Type'),
-                Tables\Columns\TextColumn::make('staff.name')
+                Tables\Columns\TextColumn::make('staff.user.name')
                     ->searchable()
                     ->sortable()
                     ->label('Staff'),

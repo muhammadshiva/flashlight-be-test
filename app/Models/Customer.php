@@ -8,28 +8,42 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Staff extends Model
+class Customer extends Model
 {
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'user_id',
-        'position',
-        'salary',
-        'hire_date',
+        'address',
+        'city',
+        'state',
+        'postal_code',
+        'country',
+        'membership_type_id',
+        'membership_expires_at',
         'is_active',
-        'notes',
+        'last_login_at',
     ];
 
     protected $casts = [
-        'hire_date' => 'date',
-        'salary' => 'float',
+        'membership_expires_at' => 'datetime',
+        'last_login_at' => 'datetime',
         'is_active' => 'boolean',
     ];
 
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function membershipType(): BelongsTo
+    {
+        return $this->belongsTo(MembershipType::class);
+    }
+
+    public function vehicles(): HasMany
+    {
+        return $this->hasMany(CustomerVehicle::class);
     }
 
     public function washTransactions(): HasMany

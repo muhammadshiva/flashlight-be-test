@@ -7,7 +7,7 @@ use App\Http\Controllers\Api\MembershipTypeController;
 use App\Http\Controllers\Api\ProductCategoryController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\StaffController;
-use App\Http\Controllers\Api\UserVehicleController;
+use App\Http\Controllers\Api\CustomerVehicleController;
 use App\Http\Controllers\Api\VehicleController;
 use App\Http\Controllers\Api\WashTransactionController;
 
@@ -117,18 +117,18 @@ Route::middleware('auth:sanctum')->group(function () {
     });
     /*
     |--------------------------------------------------------------------------
-    | Vehicle Management Routes
+    | Customer Vehicle Management Routes
     |--------------------------------------------------------------------------
     */
-    Route::prefix('user-vehicles')->group(function () {
-        Route::get('/', [UserVehicleController::class, 'index']);
-        Route::get('/user/{userId}', [UserVehicleController::class, 'getByUserId']);
-        Route::get('/vehicle/{vehicleId}', [UserVehicleController::class, 'getByVehicleId']);
-        Route::post('', [UserVehicleController::class, 'store']);
-        Route::get('/{id}', [UserVehicleController::class, 'show']);
-        Route::put('/{id}', [UserVehicleController::class, 'update']);
-        Route::delete('/{id}', [UserVehicleController::class, 'destroy']);
-        Route::post('/{id}/restore', [UserVehicleController::class, 'restore']);
+    Route::prefix('customer-vehicles')->group(function () {
+        Route::get('/', [CustomerVehicleController::class, 'index']);
+        Route::get('/customer/{customerId}', [CustomerVehicleController::class, 'getByCustomerId']);
+        Route::get('/vehicle/{vehicleId}', [CustomerVehicleController::class, 'getByVehicleId']);
+        Route::post('', [CustomerVehicleController::class, 'store']);
+        Route::get('/{id}', [CustomerVehicleController::class, 'show']);
+        Route::put('/{id}', [CustomerVehicleController::class, 'update']);
+        Route::delete('/{id}', [CustomerVehicleController::class, 'destroy']);
+        Route::post('/{id}/restore', [CustomerVehicleController::class, 'restore']);
     });
     /*
     |--------------------------------------------------------------------------
