@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class MembershipType extends Model
@@ -12,22 +13,32 @@ class MembershipType extends Model
 
     protected $fillable = [
         'name',
-        'description',
-        'price',
-        'duration_days',
         'benefits',
-        'is_active'
+        'is_active',
     ];
 
     protected $casts = [
-        'price' => 'float',
-        'duration_days' => 'integer',
         'benefits' => 'array',
-        'is_active' => 'boolean'
+        'is_active' => 'boolean',
     ];
 
-    public function users()
+    public function customers(): HasMany
     {
-        return $this->hasMany(User::class);
+        return $this->hasMany(Customer::class);
+    }
+
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
+
+    // Accessor for readable benefits string
+    public function getBenefitsTextAttribute(): string
+    {
+        if (!is_array($this->benefits)) {
+            return '';
+        }
+
+        return implode(', ', array_column($this->benefits, 'benefit'));
     }
 }

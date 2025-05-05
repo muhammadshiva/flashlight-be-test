@@ -17,9 +17,9 @@ class StaffResource extends Resource
 {
     protected static ?string $model = Staff::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-briefcase';
+    protected static ?string $navigationIcon = 'heroicon-o-user-group';
 
-    protected static ?string $navigationLabel = 'Staff';
+    protected static ?string $navigationLabel = 'Staff Members';
 
     protected static ?string $modelLabel = 'Staff Member';
 
@@ -33,18 +33,24 @@ class StaffResource extends Resource
                     ->relationship('user', 'name')
                     ->searchable()
                     ->preload()
-                    ->required(),
-                Forms\Components\TextInput::make('position')
-                    ->maxLength(255),
+                    ->required()
+                    ->label('User'),
+                Forms\Components\Select::make('position')
+                    ->options(Staff::getPositionOptions())
+                    ->required()
+                    ->label('Position Level'),
                 Forms\Components\TextInput::make('salary')
                     ->numeric()
-                    ->prefix('$'),
-                Forms\Components\DatePicker::make('hire_date'),
-                Forms\Components\Toggle::make('is_active')
+                    ->prefix('$')
+                    ->required(),
+                Forms\Components\DatePicker::make('hire_date')
                     ->required(),
                 Forms\Components\Textarea::make('notes')
                     ->maxLength(65535)
                     ->columnSpanFull(),
+                Forms\Components\Toggle::make('is_active')
+                    ->label('Active')
+                    ->default(true),
             ]);
     }
 
@@ -53,11 +59,19 @@ class StaffResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('user.name')
-                    ->searchable(),
+                    ->searchable()
+                    ->sortable()
+                    ->label('Name'),
                 Tables\Columns\TextColumn::make('position')
-                    ->searchable(),
+                    ->badge()
+                    ->color(fn(string $state): string => match ($state) {
+                        Staff::POSITION_RED => 'danger',
+                        Staff::POSITION_GREY => 'gray',
+                        Staff::POSITION_BLACK => 'dark',
+                        default => 'gray',
+                    }),
                 Tables\Columns\TextColumn::make('salary')
-                    ->money()
+                    ->money('USD')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('hire_date')
                     ->date()

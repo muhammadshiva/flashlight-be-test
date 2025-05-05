@@ -12,36 +12,40 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use App\Models\Customer;
 
 class MembershipTypeResource extends Resource
 {
     protected static ?string $model = MembershipType::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-credit-card';
+    protected static ?string $navigationIcon = 'heroicon-o-identification';
+
+    protected static ?string $navigationLabel = 'Membership Types';
+
+    protected static ?string $modelLabel = 'Membership Type';
+
+    protected static ?string $pluralModelLabel = 'Membership Types';
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('type_name')
+                Forms\Components\TextInput::make('name')
                     ->required()
-                    ->maxLength(255)
-                    ->label('Membership Type Name'),
-                Forms\Components\TextInput::make('price')
-                    ->required()
-                    ->numeric()
-                    ->prefix('$')
-                    ->label('Price'),
-                Forms\Components\TextInput::make('duration_in_months')
-                    ->required()
-                    ->numeric()
-                    ->minValue(1)
-                    ->label('Duration (Months)'),
-                Forms\Components\TextInput::make('max_wash_per_month')
-                    ->required()
-                    ->numeric()
-                    ->minValue(1)
-                    ->label('Maximum Washes Per Month'),
+                    ->maxLength(255),
+                Forms\Components\Repeater::make('benefits')
+                    ->schema([
+                        Forms\Components\TextInput::make('benefit')
+                            ->required()
+                            ->maxLength(255),
+                    ])
+                    ->defaultItems(1)
+                    ->addActionLabel('Add Benefit')
+                    ->collapsible()
+                    ->columnSpanFull(),
+                Forms\Components\Toggle::make('is_active')
+                    ->label('Active')
+                    ->default(true),
             ]);
     }
 
@@ -49,18 +53,13 @@ class MembershipTypeResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('type_name')
-                    ->searchable()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('price')
-                    ->money('USD')
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('duration_in_months')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('max_wash_per_month')
-                    ->numeric()
-                    ->sortable(),
+                Tables\Columns\TextColumn::make('name')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('benefits_text')
+                    ->label('Benefits')
+                    ->wrap(),
+                Tables\Columns\IconColumn::make('is_active')
+                    ->boolean(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -71,15 +70,20 @@ class MembershipTypeResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                Tables\Filters\TrashedFilter::make(),
             ])
             ->actions([
+                Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
+                Tables\Actions\ForceDeleteAction::make(),
+                Tables\Actions\RestoreAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\ForceDeleteBulkAction::make(),
+                    Tables\Actions\RestoreBulkAction::make(),
                 ]),
             ]);
     }
@@ -98,5 +102,13 @@ class MembershipTypeResource extends Resource
             'create' => Pages\CreateMembershipType::route('/create'),
             'edit' => Pages\EditMembershipType::route('/{record}/edit'),
         ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->withoutGlobalScopes([
+                SoftDeletingScope::class,
+            ]);
     }
 }

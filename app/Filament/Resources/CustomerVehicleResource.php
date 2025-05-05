@@ -29,15 +29,41 @@ class CustomerVehicleResource extends Resource
         return $form
             ->schema([
                 Forms\Components\Select::make('customer_id')
-                    ->relationship('customer.user', 'name')
-                    ->searchable()
+                    ->relationship('customer', 'id', fn($query) => $query->with('user'))
+                    ->getOptionLabelFromRecordUsing(fn($record) => $record->user->name)
+                    ->searchable(['user.name'])
                     ->preload()
                     ->required(),
                 Forms\Components\Select::make('vehicle_id')
-                    ->relationship('vehicle', 'name')
+                    ->relationship('vehicle', 'brand')
                     ->searchable()
                     ->preload()
-                    ->required(),
+                    ->required()
+                    ->live()
+                    ->afterStateUpdated(function ($state, Forms\Set $set) {
+                        if (!$state) {
+                            $set('vehicle_model', null);
+                            return;
+                        }
+
+                        $vehicle = \App\Models\Vehicle::find($state);
+                        if ($vehicle) {
+                            $set('vehicle_model', $vehicle->model);
+                        }
+                    }),
+                Forms\Components\Select::make('vehicle_model')
+                    ->label('Vehicle Model')
+                    ->options(function (Forms\Get $get) {
+                        $vehicleId = $get('vehicle_id');
+                        if (!$vehicleId) {
+                            return [];
+                        }
+
+                        $vehicle = \App\Models\Vehicle::find($vehicleId);
+                        return $vehicle ? [$vehicle->model => $vehicle->model] : [];
+                    })
+                    ->required()
+                    ->disabled(fn(Forms\Get $get) => !$get('vehicle_id')),
                 Forms\Components\TextInput::make('license_plate')
                     ->required()
                     ->unique(ignoreRecord: true)
@@ -51,7 +77,7 @@ class CustomerVehicleResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('customer.user.name')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('vehicle.name')
+                Tables\Columns\TextColumn::make('vehicle.brand')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('license_plate')
                     ->searchable(),

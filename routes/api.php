@@ -94,12 +94,12 @@ Route::middleware('auth:sanctum')->group(function () {
     |--------------------------------------------------------------------------
     */
     Route::prefix('staff')->group(function () {
-        Route::get('members', [StaffController::class, 'index']);
-        Route::post('members', [StaffController::class, 'store']);
-        Route::get('members/{id}', [StaffController::class, 'show']);
-        Route::put('members/{id}', [StaffController::class, 'update']);
-        Route::delete('members/{id}', [StaffController::class, 'destroy']);
-        Route::post('members/{id}/restore', [StaffController::class, 'restore']);
+        Route::get('/', [StaffController::class, 'index']);
+        Route::post('/', [StaffController::class, 'store']);
+        Route::get('/{id}', [StaffController::class, 'show']);
+        Route::put('/{id}', [StaffController::class, 'update']);
+        Route::delete('/{id}', [StaffController::class, 'destroy']);
+        Route::post('/{id}/restore', [StaffController::class, 'restore']);
     });
 
     /*
@@ -136,13 +136,13 @@ Route::middleware('auth:sanctum')->group(function () {
     |--------------------------------------------------------------------------
     */
     Route::prefix('transactions')->group(function () {
-        Route::get('washes', [WashTransactionController::class, 'index']);
-        Route::post('washes', [WashTransactionController::class, 'store']);
-        Route::get('washes/{id}', [WashTransactionController::class, 'show']);
-        Route::put('washes/{id}', [WashTransactionController::class, 'update']);
-        Route::post('washes/{id}/restore', [WashTransactionController::class, 'restore']);
-        Route::post('washes/{id}/complete', [WashTransactionController::class, 'complete']);
-        Route::post('washes/{id}/cancel', [WashTransactionController::class, 'cancel']);
-        Route::delete('washes/{id}', [WashTransactionController::class, 'destroy']);
+        Route::get('/', [WashTransactionController::class, 'index']);
+        Route::post('/', [WashTransactionController::class, 'store']);
+        Route::get('/{id}', [WashTransactionController::class, 'show']);
+        Route::put('/{id}', [WashTransactionController::class, 'update']);
+        Route::post('/{id}/restore', [WashTransactionController::class, 'restore']);
+        Route::post('/{id}/complete', [WashTransactionController::class, 'complete']);
+        Route::post('/{id}/cancel', [WashTransactionController::class, 'cancel']);
+        Route::delete('/{id}', [WashTransactionController::class, 'destroy']);
     });
 });

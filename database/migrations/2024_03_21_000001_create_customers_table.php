@@ -12,11 +12,9 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->text('address')->nullable();
-            $table->string('city')->nullable();
-            $table->string('state')->nullable();
-            $table->string('postal_code')->nullable();
-            $table->string('country')->nullable();
             $table->foreignId('membership_type_id')->nullable()->constrained('membership_types')->onDelete('set null');
+            $table->enum('membership_status', ['pending', 'approved', 'rejected'])
+                ->default('pending');
             $table->timestamp('membership_expires_at')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamp('last_login_at')->nullable();

@@ -11,12 +11,13 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use App\Models\MembershipType;
 
 class CustomerResource extends Resource
 {
     protected static ?string $model = Customer::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-user-group';
+    protected static ?string $navigationIcon = 'heroicon-o-users';
 
     protected static ?string $navigationLabel = 'Customers';
 
@@ -32,25 +33,34 @@ class CustomerResource extends Resource
                     ->relationship('user', 'name')
                     ->searchable()
                     ->preload()
-                    ->required(),
+                    ->required()
+                    ->label('User'),
                 Forms\Components\Textarea::make('address')
+                    ->required()
                     ->maxLength(65535)
                     ->columnSpanFull(),
-                Forms\Components\TextInput::make('city')
-                    ->maxLength(255),
-                Forms\Components\TextInput::make('state')
-                    ->maxLength(255),
-                Forms\Components\TextInput::make('postal_code')
-                    ->maxLength(255),
-                Forms\Components\TextInput::make('country')
-                    ->maxLength(255),
                 Forms\Components\Select::make('membership_type_id')
                     ->relationship('membershipType', 'name')
                     ->searchable()
-                    ->preload(),
-                Forms\Components\DateTimePicker::make('membership_expires_at'),
+                    ->preload()
+                    ->required()
+                    ->label('Membership Type')
+                    ->live(),
+                Forms\Components\Select::make('membership_status')
+                    ->options([
+                        Customer::MEMBERSHIP_STATUS_PENDING => 'Pending',
+                        Customer::MEMBERSHIP_STATUS_APPROVED => 'Approved',
+                        Customer::MEMBERSHIP_STATUS_REJECTED => 'Rejected',
+                    ])
+                    ->required()
+                    ->default(Customer::MEMBERSHIP_STATUS_PENDING)
+                    ->visible(fn(Forms\Get $get) => !empty($get('membership_type_id'))),
+                Forms\Components\DateTimePicker::make('membership_expires_at')
+                    ->label('Membership Expires At')
+                    ->visible(fn(Forms\Get $get) => !empty($get('membership_type_id'))),
                 Forms\Components\Toggle::make('is_active')
-                    ->required(),
+                    ->label('Active')
+                    ->default(true),
             ]);
     }
 
@@ -59,17 +69,27 @@ class CustomerResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('user.name')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('city')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('state')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('postal_code')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('country')
-                    ->searchable(),
+                    ->searchable()
+                    ->sortable()
+                    ->label('Name'),
                 Tables\Columns\TextColumn::make('membershipType.name')
-                    ->searchable(),
+                    ->searchable()
+                    ->sortable()
+                    ->badge()
+                    ->color('success'),
+                Tables\Columns\TextColumn::make('membership_status')
+                    ->badge()
+                    ->color(fn(string $state): string => match ($state) {
+                        Customer::MEMBERSHIP_STATUS_PENDING => 'warning',
+                        Customer::MEMBERSHIP_STATUS_APPROVED => 'success',
+                        Customer::MEMBERSHIP_STATUS_REJECTED => 'danger',
+                        default => 'gray',
+                    })
+                    ->visible(fn($record) => !empty($record?->membership_type_id)),
+                Tables\Columns\TextColumn::make('membership_expires_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->visible(fn($record) => !empty($record?->membership_type_id)),
                 Tables\Columns\IconColumn::make('is_active')
                     ->boolean(),
                 Tables\Columns\TextColumn::make('created_at')

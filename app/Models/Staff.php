@@ -12,6 +12,10 @@ class Staff extends Model
 {
     use HasFactory, SoftDeletes;
 
+    const POSITION_RED = 'red';
+    const POSITION_GREY = 'grey';
+    const POSITION_BLACK = 'black';
+
     protected $fillable = [
         'user_id',
         'position',
@@ -35,5 +39,29 @@ class Staff extends Model
     public function washTransactions(): HasMany
     {
         return $this->hasMany(WashTransaction::class);
+    }
+
+    public static function getPositionOptions(): array
+    {
+        return [
+            self::POSITION_RED => 'Red (Highest Level)',
+            self::POSITION_GREY => 'Grey (Middle Level)',
+            self::POSITION_BLACK => 'Black (Lowest Level)',
+        ];
+    }
+
+    public function isRedPosition(): bool
+    {
+        return $this->position === self::POSITION_RED;
+    }
+
+    public function isGreyPosition(): bool
+    {
+        return $this->position === self::POSITION_GREY;
+    }
+
+    public function isBlackPosition(): bool
+    {
+        return $this->position === self::POSITION_BLACK;
     }
 }

@@ -63,37 +63,47 @@ class UserController extends Controller
                 return $this->validationErrorResponse($validator->errors());
             }
 
-            $userData = $request->only(['name', 'email', 'phone_number', 'type']);
-            if ($request->has('password')) {
-                $userData['password'] = Hash::make($request->password);
+            DB::beginTransaction();
+
+            try {
+                $userData = $request->only(['name', 'email', 'phone_number', 'type']);
+                if ($request->has('password')) {
+                    $userData['password'] = Hash::make($request->password);
+                }
+
+                if ($request->hasFile('profile_image')) {
+                    $userData['profile_image'] = $request->file('profile_image')->store('profile-images', 'public');
+                }
+
+                $user = User::create($userData);
+
+                // Create related record based on user type
+                if ($request->type === 'customer') {
+                    $this->createCustomer($user->id, $request);
+                } elseif ($request->type === 'staff') {
+                    $this->createStaff($user->id, $request);
+                }
+
+                DB::commit();
+                return $this->successResponse($user->load(['customer', 'staff']), 'User created successfully', 201);
+            } catch (Exception $e) {
+                DB::rollBack();
+                if (isset($userData['profile_image'])) {
+                    Storage::disk('public')->delete($userData['profile_image']);
+                }
+                throw $e;
             }
-
-            if ($request->hasFile('profile_image')) {
-                $userData['profile_image'] = $request->file('profile_image')->store('profile-images', 'public');
-            }
-
-            $user = User::create($userData);
-
-            // Create related record based on user type
-            if ($request->type === 'customer') {
-                $this->createCustomer($user->id, $request);
-            } elseif ($request->type === 'staff') {
-                $this->createStaff($user->id, $request);
-            }
-
-            return $this->successResponse($user->load(['customer', 'staff']), 'User created successfully', 201);
         } catch (Exception $e) {
-            if (isset($userData['profile_image'])) {
-                Storage::disk('public')->delete($userData['profile_image']);
-            }
             return $this->handleException($e);
         }
     }
 
-    public function show(User $user)
+    public function show($id)
     {
         try {
-            return $this->successResponse($user->load(['customer', 'staff']), 'User retrieved successfully');
+            $user = User::with(['customer', 'staff'])->find($id);
+
+            return $this->successResponse($user, 'User retrieved successfully');
         } catch (Exception $e) {
             return $this->handleException($e);
         }

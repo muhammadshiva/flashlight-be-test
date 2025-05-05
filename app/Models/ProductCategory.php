@@ -15,8 +15,12 @@ class ProductCategory extends Model
 
     protected $fillable = [
         'name',
-        'description',
-        'image',
+        'icon_image',
+        'is_active',
+    ];
+
+    protected $casts = [
+        'is_active' => 'boolean',
     ];
 
     public function products(): HasMany
@@ -24,10 +28,10 @@ class ProductCategory extends Model
         return $this->hasMany(Product::class, 'category_id');
     }
 
-    public function getImageUrlAttribute(): ?string
+    public function getIconImageUrlAttribute(): ?string
     {
-        if (!$this->image) return null;
-        if (str_starts_with($this->image, 'http')) return $this->image;
-        return asset('storage/' . $this->image);
+        if (!$this->icon_image) return null;
+        if (str_starts_with($this->icon_image, 'http')) return $this->icon_image;
+        return asset('storage/' . $this->icon_image);
     }
 }
