@@ -22,7 +22,7 @@ class ProductController extends Controller
                 return [
                     'id' => $product->id,
                     'name' => $product->name,
-                    'price' => $product->price,
+                    'price' => (float) $product->price,
                     'image' => $product->image,
                     'category_id' => $product->category_id,
                     'is_active' => $product->is_active,

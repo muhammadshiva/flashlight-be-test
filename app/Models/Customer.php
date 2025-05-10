@@ -44,6 +44,16 @@ class Customer extends Model
         });
     }
 
+    public function getTotalSpentAttribute(): float
+    {
+        return $this->washTransactions()->sum('total_price');
+    }
+
+    public function getTotalTransactionsAttribute(): int
+    {
+        return $this->washTransactions()->count();
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

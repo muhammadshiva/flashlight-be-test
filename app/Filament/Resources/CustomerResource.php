@@ -90,6 +90,14 @@ class CustomerResource extends Resource
                     ->dateTime()
                     ->sortable()
                     ->visible(fn($record) => !empty($record?->membership_type_id)),
+                Tables\Columns\TextColumn::make('total_transactions')
+                    ->counts('washTransactions')
+                    ->label('Total Transactions')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('total_spent')
+                    ->money('IDR')
+                    ->label('Total Spent')
+                    ->sortable(),
                 Tables\Columns\IconColumn::make('is_active')
                     ->boolean(),
                 Tables\Columns\TextColumn::make('created_at')
