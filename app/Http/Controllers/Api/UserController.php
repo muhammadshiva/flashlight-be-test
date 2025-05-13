@@ -362,4 +362,21 @@ class UserController extends Controller
             'is_active'
         ]));
     }
+
+    public function getByPhoneNumber($phoneNumber)
+    {
+        try {
+            $user = User::with(['customer', 'staff', 'membershipType'])
+                ->where('phone_number', $phoneNumber)
+                ->first();
+
+            if (!$user) {
+                return $this->errorResponse('User not found', 404);
+            }
+
+            return $this->successResponse($user, 'User retrieved successfully');
+        } catch (Exception $e) {
+            return $this->handleException($e);
+        }
+    }
 }
