@@ -138,6 +138,7 @@ Route::middleware('auth:sanctum')->group(function () {
     */
     Route::prefix('transactions')->group(function () {
         Route::get('/', [WashTransactionController::class, 'index']);
+        Route::get('/customer/{customerId}', [WashTransactionController::class, 'getByCustomerId']);
         Route::post('/', [WashTransactionController::class, 'store']);
         Route::get('/{id}', [WashTransactionController::class, 'show']);
         Route::put('/{id}', [WashTransactionController::class, 'update']);

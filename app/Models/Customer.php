@@ -24,24 +24,59 @@ class Customer extends Model
         'membership_expires_at',
         'is_active',
         'last_login_at',
+        'total_transactions',
+        'total_premium_transactions',
     ];
 
     protected $casts = [
         'membership_expires_at' => 'datetime',
         'last_login_at' => 'datetime',
         'is_active' => 'boolean',
+        'total_transactions' => 'integer',
+        'total_premium_transactions' => 'integer',
     ];
 
     protected static function booted()
     {
         static::saving(function ($customer) {
-            // Check if membership has expired
-            if ($customer->membership_expires_at && $customer->membership_expires_at->isPast()) {
-                $customer->membership_type_id = null;
-                $customer->membership_status = null;
-                $customer->membership_expires_at = null;
+            if (
+                $customer->isDirty('membership_expires_at') ||
+                $customer->isDirty('membership_type_id') ||
+                $customer->isDirty('membership_status')
+            ) {
+                // Check if membership has expired
+                if ($customer->membership_expires_at && $customer->membership_expires_at->isPast()) {
+                    $customer->membership_type_id = null;
+                    $customer->membership_status = null;
+                    $customer->membership_expires_at = null;
+                }
             }
         });
+
+        // Update transaction counts when a wash transaction is created
+        static::updated(function ($customer) {
+            $customer->updateTransactionCounts();
+        });
+
+        static::created(function ($transaction) {
+            $transaction->customer?->updateTransactionCounts();
+        });
+
+        static::updated(function ($transaction) {
+            $transaction->customer?->updateTransactionCounts();
+        });
+
+        static::deleted(function ($transaction) {
+            $transaction->customer?->updateTransactionCounts();
+        });
+    }
+
+    public function updateTransactionCounts(): void
+    {
+        $this->update([
+            'total_transactions' => $this->washTransactions()->count(),
+            'total_premium_transactions' => $this->getTotalPremiumTransactionsAttribute()
+        ]);
     }
 
     public function getTotalSpentAttribute(): float
@@ -85,6 +120,19 @@ class Customer extends Model
     {
         return $this->washTransactions()
             ->where('created_at', '>=', now()->subYear())
+            ->count();
+    }
+
+    public function getTotalPremiumTransactionsAttribute(): int
+    {
+        return $this->washTransactions()
+            ->whereHas('products', function ($query) {
+                $query->where('is_premium', true);
+            })
+            ->whereRaw('
+                (select count(*) from wash_transaction_products
+                 where wash_transaction_products.wash_transaction_id = wash_transactions.id) > 1
+            ')
             ->count();
     }
 }

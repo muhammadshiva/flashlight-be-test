@@ -64,6 +64,8 @@ class ProductResource extends Resource
                     ->required(),
                 Forms\Components\Toggle::make('is_active')
                     ->required(),
+                Forms\Components\Toggle::make('is_premium')
+                    ->required(),
             ]);
     }
 

@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('image')->nullable();
             $table->foreignId('category_id')->nullable()->constrained('product_categories')->onDelete('set null');
             $table->boolean('is_active')->default(true);
+            $table->boolean('is_premium')->default(false);
             $table->timestamps();
             $table->softDeletes();
         });

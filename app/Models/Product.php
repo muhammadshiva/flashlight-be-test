@@ -22,6 +22,7 @@ class Product extends Model
         'image',
         'category_id',
         'is_active',
+        'is_premium',
     ];
 
     protected $appends = [
@@ -30,6 +31,7 @@ class Product extends Model
 
     protected $casts = [
         'is_active' => 'boolean',
+        'is_premium' => 'boolean',
     ];
 
     public function washTransactions(): HasMany

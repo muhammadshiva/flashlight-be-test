@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Models\WashTransaction;
 use App\Models\Product;
+use App\Models\Customer;
 use App\Traits\ApiResponse;
 use Exception;
 use Illuminate\Http\Request;
@@ -26,9 +27,10 @@ class WashTransactionController extends Controller
                 'staff.user'
             ])->latest()->get();
 
-            // Format the response to ensure total_price is float
+            // Format the response to ensure total_price is float and add total_premium_transactions
             $transactions->transform(function ($transaction) {
                 $transaction->total_price = (float) $transaction->total_price;
+                $transaction->total_premium_transactions = $transaction->customer->total_premium_transactions;
                 return $transaction;
             });
 
@@ -93,6 +95,9 @@ class WashTransactionController extends Controller
                     ]);
                 }
 
+                // Update customer transaction counts
+                $transaction->customer->updateTransactionCounts();
+
                 DB::commit();
                 return $this->successResponse(
                     $transaction->load(['customer.user', 'customerVehicle', 'primaryProduct', 'products', 'staff.user']),
@@ -119,10 +124,38 @@ class WashTransactionController extends Controller
                 'staff.user'
             ]);
 
-            // Format total_price as float
+            // Format total_price as float and add total_premium_transactions
             $washTransaction->total_price = (float) $washTransaction->total_price;
+            $washTransaction->total_premium_transactions = $washTransaction->customer->total_premium_transactions;
 
             return $this->successResponse($washTransaction, 'Wash transaction retrieved successfully');
+        } catch (Exception $e) {
+            return $this->handleException($e);
+        }
+    }
+
+    public function getByCustomerId($customerId)
+    {
+        try {
+            $transactions = WashTransaction::with([
+                'customer.user',
+                'customerVehicle',
+                'primaryProduct',
+                'products',
+                'staff.user'
+            ])
+                ->where('customer_id', $customerId)
+                ->latest()
+                ->get();
+
+            // Format the response to ensure total_price is float and add total_premium_transactions
+            $transactions->transform(function ($transaction) {
+                $transaction->total_price = (float) $transaction->total_price;
+                $transaction->total_premium_transactions = $transaction->customer->total_premium_transactions;
+                return $transaction;
+            });
+
+            return $this->successResponse($transactions, 'Customer wash transactions retrieved successfully');
         } catch (Exception $e) {
             return $this->handleException($e);
         }
@@ -152,6 +185,9 @@ class WashTransactionController extends Controller
             DB::beginTransaction();
 
             try {
+                // Store old customer ID for updating counts
+                $oldCustomerId = $washTransaction->customer_id;
+
                 // Update basic transaction details
                 $washTransaction->update($request->only([
                     'customer_id',
@@ -192,6 +228,15 @@ class WashTransactionController extends Controller
                     }
                 }
 
+                // Update transaction counts for both old and new customer if customer changed
+                if ($oldCustomerId !== $washTransaction->customer_id) {
+                    $oldCustomer = Customer::find($oldCustomerId);
+                    if ($oldCustomer) {
+                        $oldCustomer->updateTransactionCounts();
+                    }
+                }
+                $washTransaction->customer->updateTransactionCounts();
+
                 DB::commit();
                 return $this->successResponse(
                     $washTransaction->load(['customer.user', 'customerVehicle', 'primaryProduct', 'products', 'staff.user']),
@@ -212,7 +257,12 @@ class WashTransactionController extends Controller
             DB::beginTransaction();
 
             try {
+                $customer = $washTransaction->customer;
                 $washTransaction->delete();
+
+                // Update customer transaction counts
+                $customer->updateTransactionCounts();
+
                 DB::commit();
                 return $this->successResponse(null, 'Wash transaction deleted successfully', 204);
             } catch (Exception $e) {

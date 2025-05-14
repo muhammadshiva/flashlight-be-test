@@ -94,6 +94,12 @@ class CustomerResource extends Resource
                     ->counts('washTransactions')
                     ->label('Total Transactions')
                     ->sortable(),
+                Tables\Columns\TextColumn::make('total_premium_transactions')
+                    ->label('Total Premium Transactions')
+                    ->sortable()
+                    ->getStateUsing(function ($record) {
+                        return $record->total_premium_transactions;
+                    }),
                 Tables\Columns\TextColumn::make('total_spent')
                     ->money('IDR')
                     ->label('Total Spent')
