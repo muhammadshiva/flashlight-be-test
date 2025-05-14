@@ -100,6 +100,12 @@ class CustomerResource extends Resource
                     ->getStateUsing(function ($record) {
                         return $record->total_premium_transactions;
                     }),
+                Tables\Columns\TextColumn::make('total_discount_approvals')
+                    ->label('Total Discount Approvals')
+                    ->sortable()
+                    ->getStateUsing(function ($record) {
+                        return $record->total_discount_approvals;
+                    }),
                 Tables\Columns\TextColumn::make('total_spent')
                     ->money('IDR')
                     ->label('Total Spent')
