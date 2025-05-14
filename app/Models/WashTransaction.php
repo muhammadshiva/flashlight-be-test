@@ -44,6 +44,22 @@ class WashTransaction extends Model
                 $transaction->total_price = 0;
             }
         });
+
+        static::created(function ($transaction) {
+            $transaction->customer?->updateTransactionCounts();
+        });
+
+        static::updated(function ($transaction) {
+            $transaction->customer?->updateTransactionCounts();
+        });
+
+        static::deleted(function ($transaction) {
+            $transaction->customer?->updateTransactionCounts();
+        });
+
+        static::restored(function ($transaction) {
+            $transaction->customer?->updateTransactionCounts();
+        });
     }
 
     public function customer(): BelongsTo

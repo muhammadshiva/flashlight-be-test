@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 
 class Customer extends Model
 {
@@ -73,10 +74,18 @@ class Customer extends Model
 
     public function updateTransactionCounts(): void
     {
-        $this->update([
-            'total_transactions' => $this->washTransactions()->count(),
-            'total_premium_transactions' => $this->getTotalPremiumTransactionsAttribute()
-        ]);
+        $totalTransactions = $this->washTransactions()->count();
+        $totalPremiumTransactions = $this->getTotalPremiumTransactionsAttribute();
+
+        DB::table('customers')
+            ->where('id', $this->id)
+            ->update([
+                'total_transactions' => $totalTransactions,
+                'total_premium_transactions' => $totalPremiumTransactions
+            ]);
+
+        // Refresh the model to get updated values
+        $this->refresh();
     }
 
     public function getTotalSpentAttribute(): float
