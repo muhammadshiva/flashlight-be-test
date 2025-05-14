@@ -27,6 +27,7 @@ class Customer extends Model
         'last_login_at',
         'total_transactions',
         'total_premium_transactions',
+        'total_discount_approvals',
     ];
 
     protected $casts = [
@@ -35,6 +36,7 @@ class Customer extends Model
         'is_active' => 'boolean',
         'total_transactions' => 'integer',
         'total_premium_transactions' => 'integer',
+        'total_discount_approvals' => 'integer',
     ];
 
     protected static function booted()
@@ -77,11 +79,16 @@ class Customer extends Model
         $totalTransactions = $this->washTransactions()->count();
         $totalPremiumTransactions = $this->getTotalPremiumTransactionsAttribute();
 
+        // Calculate total discount approvals based on premium transactions
+        // Every 5 premium transactions = 1 discount approval
+        $totalDiscountApprovals = floor($totalPremiumTransactions / 5);
+
         DB::table('customers')
             ->where('id', $this->id)
             ->update([
                 'total_transactions' => $totalTransactions,
-                'total_premium_transactions' => $totalPremiumTransactions
+                'total_premium_transactions' => $totalPremiumTransactions,
+                'total_discount_approvals' => $totalDiscountApprovals
             ]);
 
         // Refresh the model to get updated values
