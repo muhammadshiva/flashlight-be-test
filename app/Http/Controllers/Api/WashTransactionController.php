@@ -63,6 +63,24 @@ class WashTransactionController extends Controller
             DB::beginTransaction();
 
             try {
+                // Generate transaction number
+                $today = now()->format('Ymd'); // example: 20250523
+
+                // Get the last transaction number for today
+                $lastTransaction = WashTransaction::whereDate('created_at', now())
+                    ->orderBy('created_at', 'desc')
+                    ->first();
+
+                $sequence = 1;
+                if ($lastTransaction) {
+                    // Extract the sequence number from the last transaction
+                    if (preg_match('/TRX-\d{8}-(\d{3})/', $lastTransaction->transaction_number, $matches)) {
+                        $sequence = (int)$matches[1] + 1;
+                    }
+                }
+
+                $transactionNumber = sprintf('TRX-%s-%03d', $today, $sequence);
+
                 // Calculate total price
                 $totalPrice = 0;
                 foreach ($request->products as $productData) {
@@ -72,6 +90,7 @@ class WashTransactionController extends Controller
 
                 // Create wash transaction
                 $transaction = WashTransaction::create([
+                    'transaction_number' => $transactionNumber,
                     'customer_id' => $request->customer_id,
                     'customer_vehicle_id' => $request->customer_vehicle_id,
                     'product_id' => $request->product_id,
@@ -99,11 +118,18 @@ class WashTransactionController extends Controller
                 $transaction->customer->updateTransactionCounts();
 
                 DB::commit();
-                return $this->successResponse(
-                    $transaction->load(['customer.user', 'customerVehicle', 'primaryProduct', 'products', 'staff.user']),
-                    'Wash transaction created successfully',
-                    201
-                );
+                $transaction->load(['customer.user', 'customerVehicle', 'primaryProduct', 'products', 'staff.user']);
+
+                // Format the response
+                $transaction->total_price = (float) $transaction->total_price;
+                $transaction->total_premium_transactions = $transaction->customer->total_premium_transactions;
+
+                return $this->successResponse([
+                    'transaction' => $transaction,
+                    'transaction_number' => $transaction->transaction_number,
+                    'date' => now()->format('Y-m-d'),
+                    'sequence' => $sequence
+                ], 'Wash transaction created successfully', 201);
             } catch (Exception $e) {
                 DB::rollBack();
                 throw $e;
@@ -307,6 +333,70 @@ class WashTransactionController extends Controller
                 $washTransaction->load(['customer.user', 'customerVehicle', 'primaryProduct', 'products', 'staff.user']),
                 'Wash transaction cancelled successfully'
             );
+        } catch (Exception $e) {
+            return $this->handleException($e);
+        }
+    }
+
+    public function getPreviousTransactionNumber()
+    {
+        try {
+            $lastTransaction = WashTransaction::whereDate('created_at', now())
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            if (!$lastTransaction) {
+                $today = now()->format('Ymd');
+                $nextNumber = sprintf('TRX-%s-%03d', $today, 1);
+                return $this->successResponse([
+                    'transaction_number' => $nextNumber,
+                    'date' => now()->format('Y-m-d'),
+                    'sequence' => 1
+                ], 'Next transaction number generated successfully');
+            }
+
+            // Extract the sequence number from the last transaction
+            if (preg_match('/TRX-\d{8}-(\d{3})/', $lastTransaction->transaction_number, $matches)) {
+                $sequence = (int)$matches[1];
+                $today = now()->format('Ymd');
+                $nextNumber = sprintf('TRX-%s-%03d', $today, $sequence);
+                return $this->successResponse([
+                    'transaction_number' => $nextNumber,
+                    'date' => now()->format('Y-m-d'),
+                    'sequence' => $sequence
+                ], 'Previous transaction number retrieved successfully');
+            }
+
+            return $this->errorResponse('Failed to generate transaction number', 400);
+        } catch (Exception $e) {
+            return $this->handleException($e);
+        }
+    }
+
+    public function getNextTransactionNumber()
+    {
+        try {
+            $lastTransaction = WashTransaction::whereDate('created_at', now())
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            $today = now()->format('Ymd');
+            $sequence = 1;
+
+            if ($lastTransaction) {
+                // Extract the sequence number from the last transaction
+                if (preg_match('/TRX-\d{8}-(\d{3})/', $lastTransaction->transaction_number, $matches)) {
+                    $sequence = (int)$matches[1] + 1;
+                }
+            }
+
+            $nextNumber = sprintf('TRX-%s-%03d', $today, $sequence);
+
+            return $this->successResponse([
+                'transaction_number' => $nextNumber,
+                'date' => now()->format('Y-m-d'),
+                'sequence' => $sequence
+            ], 'Next transaction number generated successfully');
         } catch (Exception $e) {
             return $this->handleException($e);
         }

@@ -16,7 +16,6 @@ class WashTransaction extends Model
     const STATUS_IN_PROGRESS = 'in_progress';
     const STATUS_COMPLETED = 'completed';
     const STATUS_CANCELLED = 'cancelled';
-
     const PAYMENT_METHOD_CASH = 'cash';
     const PAYMENT_METHOD_CASHLESS = 'cashless';
 
@@ -30,6 +29,7 @@ class WashTransaction extends Model
         'wash_date',
         'status',
         'notes',
+        'transaction_number',
     ];
 
     protected $casts = [
