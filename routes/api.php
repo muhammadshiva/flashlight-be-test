@@ -125,6 +125,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/', [CustomerVehicleController::class, 'index']);
         Route::get('/customer/{customerId}', [CustomerVehicleController::class, 'getByCustomerId']);
         Route::get('/vehicle/{vehicleId}', [CustomerVehicleController::class, 'getByVehicleId']);
+        Route::get('/license-plate/{licensePlate}', [CustomerVehicleController::class, 'getByLicensePlate']);
         Route::post('', [CustomerVehicleController::class, 'store']);
         Route::get('/{id}', [CustomerVehicleController::class, 'show']);
         Route::put('/{id}', [CustomerVehicleController::class, 'update']);

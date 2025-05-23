@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\UserResource;
 use App\Models\User;
 use App\Models\Customer;
 use App\Models\Staff;
@@ -23,8 +24,8 @@ class UserController extends Controller
     public function index()
     {
         try {
-            $users = User::with(['customer', 'staff'])->get();
-            return $this->successResponse($users, 'Users retrieved successfully');
+            $users = User::with(['customer', 'staff', 'customer.membershipType'])->get();
+            return $this->successResponse(UserResource::collection($users), 'Users retrieved successfully');
         } catch (Exception $e) {
             return $this->handleException($e);
         }
@@ -63,6 +64,26 @@ class UserController extends Controller
                 return $this->validationErrorResponse($validator->errors());
             }
 
+            // Check if a user with the same phone number already exists
+            if ($request->phone_number) {
+                $existingUser = User::where('phone_number', $request->phone_number)->first();
+
+                if ($existingUser) {
+                    // Update the existing user's name if different
+                    if ($existingUser->name !== $request->name) {
+                        $existingUser->name = $request->name;
+                        $existingUser->save();
+                    }
+
+                    $existingUser->load(['customer', 'staff', 'customer.membershipType']);
+                    return $this->successResponse(
+                        new UserResource($existingUser),
+                        'User with this phone number already exists. User information has been updated.',
+                        200
+                    );
+                }
+            }
+
             DB::beginTransaction();
 
             try {
@@ -85,7 +106,8 @@ class UserController extends Controller
                 }
 
                 DB::commit();
-                return $this->successResponse($user->load(['customer', 'staff']), 'User created successfully', 201);
+                $user->load(['customer', 'staff', 'customer.membershipType']);
+                return $this->successResponse(new UserResource($user), 'User created successfully', 201);
             } catch (Exception $e) {
                 DB::rollBack();
                 if (isset($userData['profile_image'])) {
@@ -101,9 +123,13 @@ class UserController extends Controller
     public function show($id)
     {
         try {
-            $user = User::with(['customer', 'staff'])->find($id);
+            $user = User::with(['customer', 'staff', 'customer.membershipType'])->find($id);
 
-            return $this->successResponse($user, 'User retrieved successfully');
+            if (!$user) {
+                return $this->errorResponse('User not found', 404);
+            }
+
+            return $this->successResponse(new UserResource($user), 'User retrieved successfully');
         } catch (Exception $e) {
             return $this->handleException($e);
         }
@@ -143,7 +169,8 @@ class UserController extends Controller
                 $this->updateStaff($user->staff, $request);
             }
 
-            return $this->successResponse($user->load(['customer', 'staff']), 'User updated successfully');
+            $user->load(['customer', 'staff', 'customer.membershipType']);
+            return $this->successResponse(new UserResource($user), 'User updated successfully');
         } catch (Exception $e) {
             if (isset($userData['profile_image'])) {
                 Storage::disk('public')->delete($userData['profile_image']);
@@ -175,7 +202,11 @@ class UserController extends Controller
     {
         try {
             $user = Auth::user();
-            return $this->successResponse($user, 'Profile retrieved successfully');
+            if ($user) {
+                $user->load(['customer', 'staff', 'customer.membershipType']);
+                return $this->successResponse(new UserResource($user), 'Profile retrieved successfully');
+            }
+            return $this->errorResponse('User not authenticated', 401);
         } catch (Exception $e) {
             return $this->handleException($e);
         }
@@ -185,6 +216,10 @@ class UserController extends Controller
     {
         try {
             $user = Auth::user();
+            if (!$user) {
+                return $this->errorResponse('User not authenticated', 401);
+            }
+
             $validator = Validator::make($request->all(), [
                 'name' => 'sometimes|required|string|max:255',
                 'email' => 'nullable|email|unique:users,email,' . $user->id,
@@ -218,7 +253,8 @@ class UserController extends Controller
             }
 
             DB::commit();
-            return $this->successResponse($user, 'Profile updated successfully');
+            $user->load(['customer', 'staff', 'customer.membershipType']);
+            return $this->successResponse(new UserResource($user), 'Profile updated successfully');
         } catch (Exception $e) {
             DB::rollBack();
             if (isset($path)) {
@@ -366,7 +402,7 @@ class UserController extends Controller
     public function getByPhoneNumber($phoneNumber)
     {
         try {
-            $user = User::with(['customer', 'staff', 'membershipType'])
+            $user = User::with(['customer', 'staff', 'customer.membershipType'])
                 ->where('phone_number', $phoneNumber)
                 ->first();
 
@@ -374,7 +410,7 @@ class UserController extends Controller
                 return $this->errorResponse('User not found', 404);
             }
 
-            return $this->successResponse($user, 'User retrieved successfully');
+            return $this->successResponse(new UserResource($user), 'User retrieved successfully');
         } catch (Exception $e) {
             return $this->handleException($e);
         }

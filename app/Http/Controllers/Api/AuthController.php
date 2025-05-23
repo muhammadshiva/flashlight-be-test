@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\UserResource;
 use App\Models\User;
 use App\Traits\ApiResponse;
 use Exception;
@@ -32,14 +33,24 @@ class AuthController extends Controller
                 'name' => $request->name,
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
+                'type' => 'customer', // Default type for registered users
             ]);
+
+            // Create a customer record
+            if ($user) {
+                $user->customer()->create([
+                    'is_active' => true,
+                ]);
+            }
 
             $accessToken = $user->createToken('access_token')->plainTextToken;
             $refreshToken = $user->createToken('refresh_token')->plainTextToken;
 
+            $user->load(['customer', 'staff', 'customer.membershipType']);
+
             DB::commit();
             return $this->successResponse([
-                'user' => $user,
+                'user' => new UserResource($user),
                 'access_token' => $accessToken,
                 'refresh_token' => $refreshToken,
             ], 'User registered successfully', 201);
@@ -62,11 +73,13 @@ class AuthController extends Controller
             }
 
             $user = User::where('email', $request->email)->first();
+            $user->load(['customer', 'staff', 'customer.membershipType']);
+
             $accessToken = $user->createToken('access_token')->plainTextToken;
             $refreshToken = $user->createToken('refresh_token')->plainTextToken;
 
             return $this->successResponse([
-                'user' => $user,
+                'user' => new UserResource($user),
                 'access_token' => $accessToken,
                 'refresh_token' => $refreshToken,
             ], 'User logged in successfully');
