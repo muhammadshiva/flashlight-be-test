@@ -147,7 +147,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/{id}/complete', [WashTransactionController::class, 'complete']);
         Route::post('/{id}/cancel', [WashTransactionController::class, 'cancel']);
         Route::delete('/{id}', [WashTransactionController::class, 'destroy']);
-        Route::get('/next-number', [WashTransactionController::class, 'getNextTransactionNumber']);
-        Route::get('/prev-number', [WashTransactionController::class, 'getPreviousTransactionNumber']);
     });
+
+    Route::get('/trx-next-number', [WashTransactionController::class, 'getNextTransactionNumber']);
+    Route::get('/trx-prev-number', [WashTransactionController::class, 'getPreviousTransactionNumber']);
 });
