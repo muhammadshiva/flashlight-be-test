@@ -2,6 +2,16 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Resources\CustomerResource;
+use App\Filament\Resources\CustomerVehicleResource;
+use App\Filament\Resources\MembershipTypeResource;
+use App\Filament\Resources\ProductCategoryResource;
+use App\Filament\Resources\ProductResource;
+use App\Filament\Resources\StaffResource;
+use App\Filament\Resources\UserResource;
+use App\Filament\Resources\VehicleResource;
+use App\Filament\Resources\WashTransactionResource;
+use App\Http\Middleware\CashierAccess;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -27,6 +37,7 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            ->profile()
             ->colors([
                 'primary' => Color::Amber,
             ])
@@ -50,9 +61,27 @@ class AdminPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
+                CashierAccess::class,
             ])
             ->authMiddleware([
                 Authenticate::class,
+            ])
+            ->authGuard('web')
+            ->renderHook(
+                'panels::auth.login.form.after',
+                fn() => view('filament.custom.login-form-after')
+            )
+            ->unsavedChangesAlerts()
+            ->resources([
+                CustomerResource::class,
+                CustomerVehicleResource::class,
+                MembershipTypeResource::class,
+                ProductCategoryResource::class,
+                ProductResource::class,
+                StaffResource::class,
+                UserResource::class,
+                VehicleResource::class,
+                WashTransactionResource::class,
             ]);
     }
 }

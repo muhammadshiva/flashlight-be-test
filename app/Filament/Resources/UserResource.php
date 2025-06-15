@@ -13,6 +13,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\Hash;
+use Spatie\Permission\Models\Role;
 
 class UserResource extends Resource
 {
@@ -35,12 +36,13 @@ class UserResource extends Resource
                     ->tel()
                     ->maxLength(20),
                 Forms\Components\Select::make('type')
-                    ->options([
-                        'admin' => 'Admin',
-                        'customer' => 'Customer',
-                        'staff' => 'Staff',
-                    ])
+                    ->options(User::getTypeOptions())
                     ->required(),
+                Forms\Components\Select::make('roles')
+                    ->multiple()
+                    ->relationship('roles', 'name')
+                    ->preload()
+                    ->options(Role::pluck('name', 'id')),
                 Forms\Components\FileUpload::make('profile_image')
                     ->image()
                     ->directory('profile-images'),
@@ -68,12 +70,18 @@ class UserResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('phone_number')
                     ->searchable(),
+                Tables\Columns\TextColumn::make('roles.name')
+                    ->badge()
+                    ->color('primary'),
                 Tables\Columns\TextColumn::make('type')
                     ->badge()
                     ->color(fn(string $state): string => match ($state) {
+                        'owner' => 'purple',
                         'admin' => 'danger',
+                        'cashier' => 'warning',
+                        'staff' => 'info',
                         'customer' => 'success',
-                        'staff' => 'warning',
+                        default => 'gray',
                     }),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
@@ -86,11 +94,9 @@ class UserResource extends Resource
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('type')
-                    ->options([
-                        'admin' => 'Admin',
-                        'customer' => 'Customer',
-                        'staff' => 'Staff',
-                    ]),
+                    ->options(User::getTypeOptions()),
+                Tables\Filters\SelectFilter::make('roles')
+                    ->relationship('roles', 'name'),
                 Tables\Filters\TrashedFilter::make(),
             ])
             ->actions([

@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\WashTransactionResource\Pages;
 use App\Filament\Resources\WashTransactionResource\RelationManagers;
+use App\Models\User;
 use App\Models\WashTransaction;
 use App\Models\Product;
 use Filament\Forms;
@@ -13,6 +14,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class WashTransactionResource extends Resource
@@ -20,6 +22,8 @@ class WashTransactionResource extends Resource
     protected static ?string $model = WashTransaction::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-list';
+
+    protected static ?string $navigationLabel = 'Wash Transactions';
 
     public static function form(Form $form): Form
     {
@@ -196,24 +200,29 @@ class WashTransactionResource extends Resource
                     ->label('Payment Method'),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\ViewAction::make()
+                    ->url(fn(WashTransaction $record): string => route('filament.admin.resources.wash-transactions.edit', ['record' => $record])),
+                Tables\Actions\EditAction::make()
+                    ->visible(fn() => Auth::user()->type !== User::TYPE_CASHIER),
+                Tables\Actions\DeleteAction::make()
+                    ->visible(fn() => Auth::user()->type !== User::TYPE_CASHIER),
                 Tables\Actions\Action::make('complete')
                     ->action(fn(WashTransaction $record) => $record->update(['status' => WashTransaction::STATUS_COMPLETED]))
                     ->requiresConfirmation()
-                    ->visible(fn(WashTransaction $record) => !$record->isCompleted())
+                    ->visible(fn(WashTransaction $record) => !$record->isCompleted() && Auth::user()->type !== User::TYPE_CASHIER)
                     ->color('success')
                     ->icon('heroicon-o-check-circle'),
                 Tables\Actions\Action::make('cancel')
                     ->action(fn(WashTransaction $record) => $record->update(['status' => WashTransaction::STATUS_CANCELLED]))
                     ->requiresConfirmation()
-                    ->visible(fn(WashTransaction $record) => !$record->isCancelled() && !$record->isCompleted())
+                    ->visible(fn(WashTransaction $record) => !$record->isCancelled() && !$record->isCompleted() && Auth::user()->type !== User::TYPE_CASHIER)
                     ->color('danger')
                     ->icon('heroicon-o-x-circle'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->visible(fn() => Auth::user()->type !== User::TYPE_CASHIER),
                 ]),
             ]);
     }
@@ -232,5 +241,10 @@ class WashTransactionResource extends Resource
             'create' => Pages\CreateWashTransaction::route('/create'),
             'edit' => Pages\EditWashTransaction::route('/{record}/edit'),
         ];
+    }
+
+    public static function canCreate(): bool
+    {
+        return Auth::check() && Auth::user()->type !== User::TYPE_CASHIER;
     }
 }
