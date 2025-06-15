@@ -2,7 +2,7 @@
 
 ## Overview
 
-Sistem pembayaran untuk Flashlight Car & Motorcycle Wash dengan support untuk metode pembayaran Cash dan QRIS, terintegrasi dengan thermal printer Bluetooth.
+Sistem pembayaran untuk Flashlight Car & Motorcycle Wash dengan support untuk metode pembayaran Cash dan QRIS.
 
 ## Features Implemented
 
@@ -22,7 +22,7 @@ Sistem pembayaran untuk Flashlight Car & Motorcycle Wash dengan support untuk me
 -   Form input nominal uang yang dibayar
 -   Perhitungan kembalian otomatis
 -   Validasi minimum pembayaran
--   Cetak struk otomatis melalui thermal printer
+-   Pembayaran otomatis tersimpan
 
 **Proses QRIS Payment:**
 
@@ -39,29 +39,9 @@ Sistem pembayaran untuk Flashlight Car & Motorcycle Wash dengan support untuk me
 -   Monitor semua transaksi QRIS
 -   Check status payment manual
 -   View QR code untuk transaksi pending
--   Print receipt untuk transaksi completed
 -   Auto-refresh setiap 30 detik
 
-### 3. Thermal Printer Integration
-
-**File:** `app/Services/ThermalPrinterService.php`
-
-**Fitur:**
-
--   Test koneksi printer Bluetooth
--   Format struk otomatis (58mm/80mm)
--   Print detail transaksi lengkap
--   Support untuk berbagai ukuran kertas
--   Logging untuk troubleshooting
-
-**Printer Settings:**
-
--   Scan dan pilih device Bluetooth
--   Setting ukuran kertas (58mm/80mm)
--   Auto-print toggle
--   Test connection
-
-### 4. QRIS Integration
+### 3. QRIS Integration
 
 **File:** `app/Services/QRISService.php`
 
@@ -73,7 +53,7 @@ Sistem pembayaran untuk Flashlight Car & Motorcycle Wash dengan support untuk me
 -   Process payment completion
 -   Error handling dan logging
 
-### 5. Payment Model
+### 4. Payment Model
 
 **File:** `app/Models/Payment.php`
 
@@ -88,7 +68,6 @@ Sistem pembayaran untuk Flashlight Car & Motorcycle Wash dengan support untuk me
 -   qris_transaction_id
 -   status (pending/completed/failed)
 -   receipt_data (JSON)
--   receipt_printed (Boolean)
 -   paid_at (Timestamp)
 
 **Methods:**
@@ -104,21 +83,6 @@ Sistem pembayaran untuk Flashlight Car & Motorcycle Wash dengan support untuk me
 1. **Payment Processing** - Proses pembayaran transaksi baru
 2. **QRIS Payments** - Monitor dan manage pembayaran QRIS
 
-## Printer Settings
-
-**Available Actions:**
-
--   **Printer Settings**: Konfigurasi printer dan koneksi
--   **Test Printer**: Test koneksi dan print test
--   **Scan Devices**: Scan perangkat Bluetooth yang tersedia
-
-**Supported Printers:**
-
--   Thermal Printer 58mm
--   Thermal Printer 80mm
--   Xprinter XP-58IIH
--   Generic Bluetooth thermal printers
-
 ## QRIS Flow
 
 1. Customer memilih QRIS payment
@@ -127,7 +91,6 @@ Sistem pembayaran untuk Flashlight Car & Motorcycle Wash dengan support untuk me
 4. System create payment record dengan status "pending"
 5. Cashier dapat check status payment manual
 6. Setelah payment completed, auto-update status
-7. Print receipt jika diperlukan
 
 ## Cash Payment Flow
 
@@ -136,8 +99,7 @@ Sistem pembayaran untuk Flashlight Car & Motorcycle Wash dengan support untuk me
 3. System calculate kembalian otomatis
 4. Validasi minimum pembayaran
 5. Create payment record dengan status "completed"
-6. Auto-print receipt jika enabled
-7. Update transaction status
+6. Update transaction status
 
 ## Database Schema
 
@@ -155,14 +117,13 @@ CREATE TABLE payments (
     qris_transaction_id VARCHAR NULLABLE,
     status ENUM('pending', 'completed', 'failed') DEFAULT 'pending',
     receipt_data JSON NULLABLE,
-    receipt_printed BOOLEAN DEFAULT false,
     paid_at TIMESTAMP NULLABLE,
     created_at TIMESTAMP,
     updated_at TIMESTAMP
 );
 ```
 
-## Receipt Format
+## Receipt Data Format
 
 **Header:**
 
@@ -200,19 +161,7 @@ CREATE TABLE payments (
 
 -   Thank you message
 
-## Configuration
-
-### Session Storage
-
-```php
-session(['printer_settings' => [
-    'printer_device' => 'device_id',
-    'auto_print' => true,
-    'printer_width' => 58
-]]);
-```
-
-### Services Configuration
+## Services Configuration
 
 Add to `config/services.php`:
 
@@ -231,29 +180,16 @@ Add to `config/services.php`:
 php artisan migrate
 ```
 
-2. Ensure Bluetooth is available on server
-3. Configure printer settings through UI
-4. Test printer connection
-5. Configure QRIS merchant settings
+2. Configure QRIS merchant settings
 
 ## Future Enhancements
 
-1. **Real Bluetooth Integration**: Implement actual Bluetooth connection
-2. **QRIS Provider Integration**: Connect with real QRIS provider (DANA, OVO, etc.)
-3. **Receipt Customization**: Allow custom receipt templates
-4. **Payment Analytics**: Dashboard untuk analisis pembayaran
-5. **Multi-printer Support**: Support multiple printers
-6. **SMS/Email Receipt**: Digital receipt options
-7. **Payment History Export**: Export payment reports
+1. **QRIS Provider Integration**: Connect with real QRIS provider (DANA, OVO, etc.)
+2. **Payment Analytics**: Dashboard untuk analisis pembayaran
+3. **SMS/Email Receipt**: Digital receipt options
+4. **Payment History Export**: Export payment reports
 
 ## Troubleshooting
-
-### Printer Issues
-
--   Check Bluetooth connection
--   Verify printer power
--   Test with different paper sizes
--   Check printer compatibility
 
 ### QRIS Issues
 

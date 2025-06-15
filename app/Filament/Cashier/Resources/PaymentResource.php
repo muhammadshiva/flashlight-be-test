@@ -6,7 +6,6 @@ use App\Filament\Cashier\Resources\PaymentResource\Pages;
 use App\Models\WashTransaction;
 use App\Models\Payment;
 use App\Models\Product;
-use App\Services\ThermalPrinterService;
 use App\Services\QRISService;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -156,10 +155,6 @@ class PaymentResource extends Resource
                             ->view('filament.qris-display')
                             ->visible(fn(callable $get) => $get('payment_method') === 'qris')
                             ->viewData([]),
-
-                        Forms\Components\Checkbox::make('print_receipt')
-                            ->label('Print Receipt')
-                            ->default(true),
                     ])
                     ->action(function (array $data, WashTransaction $record) {
                         // Validate cash payment
@@ -225,29 +220,11 @@ class PaymentResource extends Resource
                             'payment_method' => 'cash'
                         ]);
 
-                        // Handle receipt printing
-                        if ($data['print_receipt']) {
-                            $printerService = new ThermalPrinterService();
-
-                            if ($printerService->printReceipt($payment)) {
-                                Notification::make()
-                                    ->title('Payment Processed Successfully')
-                                    ->body('Receipt printed successfully')
-                                    ->success()
-                                    ->send();
-                            } else {
-                                Notification::make()
-                                    ->title('Payment Processed')
-                                    ->body('Receipt printing failed - please check printer connection')
-                                    ->warning()
-                                    ->send();
-                            }
-                        } else {
-                            Notification::make()
-                                ->title('Payment Processed Successfully')
-                                ->success()
-                                ->send();
-                        }
+                        // Payment completed successfully
+                        Notification::make()
+                            ->title('Payment Processed Successfully')
+                            ->success()
+                            ->send();
                     })
                     ->modalHeading('Process Payment')
                     ->modalWidth('md'),

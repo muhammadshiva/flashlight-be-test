@@ -28,7 +28,6 @@ class Payment extends Model
         'qris_transaction_id',
         'status',
         'receipt_data',
-        'receipt_printed',
         'paid_at',
     ];
 
@@ -36,7 +35,6 @@ class Payment extends Model
         'amount_paid' => 'decimal:2',
         'change_amount' => 'decimal:2',
         'receipt_data' => 'array',
-        'receipt_printed' => 'boolean',
         'paid_at' => 'datetime',
     ];
 

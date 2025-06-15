@@ -5,7 +5,6 @@ namespace App\Filament\Cashier\Resources;
 use App\Filament\Cashier\Resources\QRISPaymentResource\Pages;
 use App\Models\Payment;
 use App\Services\QRISService;
-use App\Services\ThermalPrinterService;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -114,28 +113,6 @@ class QRISPaymentResource extends Resource
                                 ->title('Payment Still Pending')
                                 ->body('Customer has not completed the payment yet')
                                 ->warning()
-                                ->send();
-                        }
-                    }),
-
-                Action::make('print_receipt')
-                    ->label('Print Receipt')
-                    ->icon('heroicon-o-printer')
-                    ->color('success')
-                    ->visible(fn(Payment $record) => $record->status === Payment::STATUS_COMPLETED && !$record->receipt_printed)
-                    ->action(function (Payment $record) {
-                        $printerService = new ThermalPrinterService();
-
-                        if ($printerService->printReceipt($record)) {
-                            Notification::make()
-                                ->title('Receipt Printed')
-                                ->success()
-                                ->send();
-                        } else {
-                            Notification::make()
-                                ->title('Printing Failed')
-                                ->body('Please check printer connection')
-                                ->danger()
                                 ->send();
                         }
                     }),
