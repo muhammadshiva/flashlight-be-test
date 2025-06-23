@@ -36,10 +36,7 @@ class Staff extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function washTransactions(): HasMany
-    {
-        return $this->hasMany(WashTransaction::class);
-    }
+
 
     public static function getPositionOptions(): array
     {

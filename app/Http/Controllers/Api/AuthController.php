@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UserResource;
 use App\Models\User;
+use App\Models\DeviceFcmToken;
 use App\Traits\ApiResponse;
 use Exception;
 use Illuminate\Http\Request;
@@ -66,6 +67,10 @@ class AuthController extends Controller
             $request->validate([
                 'email' => ['required', 'string', 'email'],
                 'password' => ['required', 'string'],
+                'fcm_token' => ['required', 'string', 'min:50'], // Make FCM token required with minimum length
+                'device_id' => ['required', 'string'], // Device identifier
+                'device_name' => ['nullable', 'string'],
+                'platform' => ['nullable', 'string'],
             ]);
 
             if (!Auth::attempt($request->only('email', 'password'))) {
@@ -73,6 +78,22 @@ class AuthController extends Controller
             }
 
             $user = User::where('email', $request->email)->first();
+
+            // Store device FCM token (this will be used for all transactions)
+            $deviceToken = DeviceFcmToken::storeDeviceToken(
+                $request->device_id,
+                $request->fcm_token,
+                $user->id,
+                $request->device_name,
+                $request->platform
+            );
+
+            // Still update user FCM token for backward compatibility
+            $user->update([
+                'fcm_token' => $request->fcm_token,
+                'last_login_at' => now(),
+            ]);
+
             $user->load(['customer', 'staff', 'customer.membershipType']);
 
             $accessToken = $user->createToken('access_token')->plainTextToken;
@@ -82,7 +103,70 @@ class AuthController extends Controller
                 'user' => new UserResource($user),
                 'access_token' => $accessToken,
                 'refresh_token' => $refreshToken,
-            ], 'User logged in successfully');
+                'fcm_token_updated' => true,
+                'device_token_stored' => true,
+                'device_id' => $request->device_id,
+            ], 'User logged in successfully and device FCM token stored');
+        } catch (Exception $e) {
+            return $this->handleException($e);
+        }
+    }
+
+    /**
+     * Login with email, password and FCM token (simplified endpoint)
+     */
+    public function loginWithFcm(Request $request)
+    {
+        try {
+            $request->validate([
+                'email' => ['required', 'string', 'email'],
+                'password' => ['required', 'string'],
+                'fcm_token' => ['required', 'string', 'min:50'],
+            ]);
+
+            // Authenticate user
+            if (!Auth::attempt($request->only('email', 'password'))) {
+                return $this->errorResponse('Invalid email or password.', 401);
+            }
+
+            $user = User::where('email', $request->email)->first();
+
+            // Update FCM token and last login time
+            $user->update([
+                'fcm_token' => $request->fcm_token,
+                'last_login_at' => now(),
+            ]);
+
+            // Load relations
+            $user->load(['customer', 'staff', 'customer.membershipType']);
+
+            // Generate tokens
+            $accessToken = $user->createToken('access_token')->plainTextToken;
+
+            return $this->successResponse([
+                'user' => new UserResource($user),
+                'access_token' => $accessToken,
+                'fcm_token' => $user->fcm_token,
+                'message' => 'Login successful, FCM token updated for notifications',
+            ], 'Login successful');
+        } catch (Exception $e) {
+            return $this->handleException($e);
+        }
+    }
+
+    /**
+     * Get current user's FCM token
+     */
+    public function getFcmToken(Request $request)
+    {
+        try {
+            $user = $request->user();
+
+            return $this->successResponse([
+                'fcm_token' => $user->fcm_token,
+                'has_fcm_token' => $user->hasFcmToken(),
+                'last_login_at' => $user->last_login_at,
+            ], 'FCM token retrieved successfully');
         } catch (Exception $e) {
             return $this->handleException($e);
         }

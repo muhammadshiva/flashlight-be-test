@@ -24,7 +24,7 @@ class WashTransactionController extends Controller
                 'customerVehicle',
                 'primaryProduct',
                 'products',
-                'staff.user'
+                'user'
             ])->latest()->get();
 
             // Format the response to ensure total_price is float and add total_premium_transactions
@@ -47,8 +47,8 @@ class WashTransactionController extends Controller
                 'customer_id' => 'required|exists:customers,id',
                 'customer_vehicle_id' => 'required|exists:customer_vehicles,id',
                 'product_id' => 'nullable|exists:products,id',
-                'staff_id' => 'required|exists:staff,id',
-                'payment_method' => 'required|in:cash,cashless',
+                'user_id' => 'required|exists:users,id',
+                'payment_method' => 'required|in:cash,cashless,transfer',
                 'wash_date' => 'required|date',
                 'products' => 'required|array|min:1',
                 'products.*.product_id' => 'required|exists:products,id',
@@ -94,7 +94,7 @@ class WashTransactionController extends Controller
                     'customer_id' => $request->customer_id,
                     'customer_vehicle_id' => $request->customer_vehicle_id,
                     'product_id' => $request->product_id,
-                    'staff_id' => $request->staff_id,
+                    'user_id' => $request->user_id,
                     'total_price' => $totalPrice,
                     'payment_method' => $request->payment_method,
                     'wash_date' => $request->wash_date,
@@ -118,7 +118,7 @@ class WashTransactionController extends Controller
                 $transaction->customer->updateTransactionCounts();
 
                 DB::commit();
-                $transaction->load(['customer.user', 'customerVehicle', 'primaryProduct', 'products', 'staff.user']);
+                $transaction->load(['customer.user', 'customerVehicle', 'primaryProduct', 'products', 'user']);
 
                 // Format the response
                 $transaction->total_price = (float) $transaction->total_price;
@@ -147,7 +147,7 @@ class WashTransactionController extends Controller
                 'customerVehicle',
                 'primaryProduct',
                 'products',
-                'staff.user'
+                'user'
             ]);
 
             // Format total_price as float and add total_premium_transactions
@@ -168,7 +168,7 @@ class WashTransactionController extends Controller
                 'customerVehicle',
                 'primaryProduct',
                 'products',
-                'staff.user'
+                'user'
             ])
                 ->where('customer_id', $customerId)
                 ->latest()
@@ -194,8 +194,8 @@ class WashTransactionController extends Controller
                 'customer_id' => 'sometimes|required|exists:customers,id',
                 'customer_vehicle_id' => 'sometimes|required|exists:customer_vehicles,id',
                 'product_id' => 'nullable|exists:products,id',
-                'staff_id' => 'sometimes|required|exists:staff,id',
-                'payment_method' => 'sometimes|required|in:cash,cashless',
+                'user_id' => 'sometimes|required|exists:users,id',
+                'payment_method' => 'sometimes|required|in:cash,cashless,transfer',
                 'wash_date' => 'sometimes|required|date',
                 'status' => 'sometimes|required|in:pending,in_progress,completed,cancelled',
                 'products' => 'sometimes|required|array|min:1',
@@ -219,7 +219,7 @@ class WashTransactionController extends Controller
                     'customer_id',
                     'customer_vehicle_id',
                     'product_id',
-                    'staff_id',
+                    'user_id',
                     'payment_method',
                     'wash_date',
                     'status',
@@ -265,7 +265,7 @@ class WashTransactionController extends Controller
 
                 DB::commit();
                 return $this->successResponse(
-                    $washTransaction->load(['customer.user', 'customerVehicle', 'primaryProduct', 'products', 'staff.user']),
+                    $washTransaction->load(['customer.user', 'customerVehicle', 'primaryProduct', 'products', 'user']),
                     'Wash transaction updated successfully'
                 );
             } catch (Exception $e) {

@@ -5,6 +5,7 @@ namespace App\Filament\Cashier\Resources;
 use App\Filament\Cashier\Resources\QRISPaymentResource\Pages;
 use App\Models\Payment;
 use App\Services\QRISService;
+use App\Services\FCMService;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -13,6 +14,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Notifications\Notification;
 use Filament\Tables\Actions\Action;
+use Illuminate\Support\Facades\Auth;
 
 class QRISPaymentResource extends Resource
 {
@@ -95,11 +97,31 @@ class QRISPaymentResource extends Resource
                         if ($status['status'] === 'completed') {
                             $qrisService->processPaymentCompletion($record, $record->qris_transaction_id);
 
-                            Notification::make()
-                                ->title('Payment Completed')
-                                ->body('QRIS payment has been successfully completed')
-                                ->success()
-                                ->send();
+                            // Send FCM notification to device (1 device for multiple users approach)
+                            try {
+                                $fcmService = app(\App\Services\FCMService::class);
+                                $fcmResult = $fcmService->sendPaymentNotificationToDevice($record);
+
+                                if ($fcmResult['success']) {
+                                    Notification::make()
+                                        ->title('Payment Completed')
+                                        ->body('QRIS payment has been successfully completed. FCM notification sent to device.')
+                                        ->success()
+                                        ->send();
+                                } else {
+                                    Notification::make()
+                                        ->title('Payment Completed')
+                                        ->body('QRIS payment completed. FCM notification not sent: ' . $fcmResult['message'])
+                                        ->warning()
+                                        ->send();
+                                }
+                            } catch (\Exception $e) {
+                                Notification::make()
+                                    ->title('Payment Completed')
+                                    ->body('QRIS payment completed but FCM notification failed: ' . $e->getMessage())
+                                    ->warning()
+                                    ->send();
+                            }
                         } elseif ($status['status'] === 'failed') {
                             $record->update(['status' => Payment::STATUS_FAILED]);
 

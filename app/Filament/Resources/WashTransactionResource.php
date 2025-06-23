@@ -49,13 +49,12 @@ class WashTransactionResource extends Resource
                     ->preload()
                     ->nullable()
                     ->helperText('Optional: Select a primary product for this transaction'),
-                Forms\Components\Select::make('staff_id')
-                    ->relationship('staff', 'id', fn($query) => $query->with('user'))
-                    ->getOptionLabelFromRecordUsing(fn($record) => $record->user->name)
-                    ->searchable(['user.name'])
+                Forms\Components\Select::make('user_id')
+                    ->relationship('user', 'name')
+                    ->searchable()
                     ->preload()
                     ->required()
-                    ->label('Staff'),
+                    ->label('User'),
                 Forms\Components\Select::make('payment_method')
                     ->options(WashTransaction::getPaymentMethodOptions())
                     ->required()
@@ -152,10 +151,10 @@ class WashTransactionResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->label('Primary Product'),
-                Tables\Columns\TextColumn::make('staff.user.name')
+                Tables\Columns\TextColumn::make('user.name')
                     ->searchable()
                     ->sortable()
-                    ->label('Staff'),
+                    ->label('User'),
                 Tables\Columns\TextColumn::make('total_price')
                     ->money('IDR')
                     ->sortable()

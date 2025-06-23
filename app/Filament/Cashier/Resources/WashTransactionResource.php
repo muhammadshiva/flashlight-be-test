@@ -44,8 +44,8 @@ class WashTransactionResource extends Resource
                         Forms\Components\TextInput::make('primaryProduct.name')
                             ->label('Primary Product')
                             ->disabled(),
-                        Forms\Components\TextInput::make('staff.user.name')
-                            ->label('Staff')
+                        Forms\Components\TextInput::make('user.name')
+                            ->label('User')
                             ->disabled(),
                         Forms\Components\TextInput::make('payment_method')
                             ->label('Payment Method')

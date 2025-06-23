@@ -18,6 +18,8 @@ return new class extends Migration
             $table->enum('type', ['admin', 'customer', 'staff']);
             $table->timestamp('email_verified_at')->nullable();
             $table->rememberToken();
+            $table->string('fcm_token')->nullable();
+            $table->timestamp('last_login_at')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });

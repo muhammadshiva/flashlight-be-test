@@ -48,6 +48,7 @@ class User extends Authenticatable
         'is_active',
         'last_login_at',
         'type',
+        'fcm_token',
     ];
     /**
      * The attributes that should be hidden for serialization.
@@ -81,22 +82,27 @@ class User extends Authenticatable
     protected static function booted(): void
     {
         static::created(function (User $user) {
-            // Assign role based on user type
+            // Assign role based on user type with explicit web guard
             switch ($user->type) {
                 case self::TYPE_OWNER:
-                    $user->assignRole('owner');
+                    $role = \Spatie\Permission\Models\Role::findByName('owner', 'web');
+                    $user->assignRole($role);
                     break;
                 case self::TYPE_ADMIN:
-                    $user->assignRole('admin');
+                    $role = \Spatie\Permission\Models\Role::findByName('admin', 'web');
+                    $user->assignRole($role);
                     break;
                 case self::TYPE_CASHIER:
-                    $user->assignRole('cashier');
+                    $role = \Spatie\Permission\Models\Role::findByName('cashier', 'web');
+                    $user->assignRole($role);
                     break;
                 case self::TYPE_STAFF:
-                    $user->assignRole('staff');
+                    $role = \Spatie\Permission\Models\Role::findByName('staff', 'web');
+                    $user->assignRole($role);
                     break;
                 case self::TYPE_CUSTOMER:
-                    $user->assignRole('customer');
+                    $role = \Spatie\Permission\Models\Role::findByName('customer', 'web');
+                    $user->assignRole($role);
                     break;
             }
         });
@@ -107,22 +113,27 @@ class User extends Authenticatable
                 // Remove existing roles
                 $user->syncRoles([]);
 
-                // Assign new role based on updated type
+                // Assign new role based on updated type with explicit web guard
                 switch ($user->type) {
                     case self::TYPE_OWNER:
-                        $user->assignRole('owner');
+                        $role = \Spatie\Permission\Models\Role::findByName('owner', 'web');
+                        $user->assignRole($role);
                         break;
                     case self::TYPE_ADMIN:
-                        $user->assignRole('admin');
+                        $role = \Spatie\Permission\Models\Role::findByName('admin', 'web');
+                        $user->assignRole($role);
                         break;
                     case self::TYPE_CASHIER:
-                        $user->assignRole('cashier');
+                        $role = \Spatie\Permission\Models\Role::findByName('cashier', 'web');
+                        $user->assignRole($role);
                         break;
                     case self::TYPE_STAFF:
-                        $user->assignRole('staff');
+                        $role = \Spatie\Permission\Models\Role::findByName('staff', 'web');
+                        $user->assignRole($role);
                         break;
                     case self::TYPE_CUSTOMER:
-                        $user->assignRole('customer');
+                        $role = \Spatie\Permission\Models\Role::findByName('customer', 'web');
+                        $user->assignRole($role);
                         break;
                 }
             }
@@ -198,5 +209,37 @@ class User extends Authenticatable
     public function canAccessAdmin(): bool
     {
         return in_array($this->type, [self::TYPE_OWNER, self::TYPE_ADMIN, self::TYPE_CASHIER]);
+    }
+
+    /**
+     * Route notifications for the FCM channel.
+     */
+    public function routeNotificationForFcm($notification = null): ?string
+    {
+        return $this->fcm_token;
+    }
+
+    /**
+     * Update the user's FCM token.
+     */
+    public function updateFcmToken(string $token): bool
+    {
+        return $this->update(['fcm_token' => $token]);
+    }
+
+    /**
+     * Check if user has FCM token.
+     */
+    public function hasFcmToken(): bool
+    {
+        return !empty($this->fcm_token);
+    }
+
+    /**
+     * Clear FCM token (useful when token becomes invalid)
+     */
+    public function clearFcmToken(): bool
+    {
+        return $this->update(['fcm_token' => null]);
     }
 }

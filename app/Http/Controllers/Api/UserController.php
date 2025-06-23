@@ -307,10 +307,19 @@ class UserController extends Controller
             'country' => 'nullable|string',
             'membership_type_id' => 'nullable|exists:membership_types,id',
             'membership_expires_at' => 'nullable|date',
+            'fcm_token' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        // Update FCM token in user table if provided
+        if ($request->has('fcm_token') && !empty($request->fcm_token)) {
+            $user = User::find($userId);
+            if ($user) {
+                $user->updateFcmToken($request->fcm_token);
+            }
         }
 
         $customerData = $request->only([
@@ -412,6 +421,45 @@ class UserController extends Controller
 
             return $this->successResponse(new UserResource($user), 'User retrieved successfully');
         } catch (Exception $e) {
+            return $this->handleException($e);
+        }
+    }
+
+    public function updateFcmToken(Request $request, $id)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'fcm_token' => 'required|string',
+            ]);
+
+            if ($validator->fails()) {
+                return $this->validationErrorResponse($validator->errors());
+            }
+
+            $user = User::find($id);
+
+            if (!$user) {
+                return $this->errorResponse('User not found', 404);
+            }
+
+            DB::beginTransaction();
+
+            $success = $user->updateFcmToken($request->fcm_token);
+
+            if (!$success) {
+                DB::rollBack();
+                return $this->errorResponse('Failed to update FCM token', 500);
+            }
+
+            DB::commit();
+
+            $user->load(['customer', 'staff', 'customer.membershipType']);
+            return $this->successResponse(
+                new UserResource($user),
+                'FCM token updated successfully'
+            );
+        } catch (Exception $e) {
+            DB::rollBack();
             return $this->handleException($e);
         }
     }

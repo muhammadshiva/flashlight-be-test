@@ -135,8 +135,9 @@ class QRISService
                 'paid_at' => now()
             ]);
 
-            // Update wash transaction
+            // Update wash transaction status to completed
             $payment->washTransaction->update([
+                'status' => WashTransaction::STATUS_COMPLETED,
                 'payment_method' => 'cashless'
             ]);
 

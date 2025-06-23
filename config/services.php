@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    'fcm' => [
+        'project_id' => env('FIREBASE_PROJECT_ID'),
+        'credentials_path' => env('FCM_CREDENTIALS_PATH', storage_path('app/firebase/firebase-credentials.json')),
+        'demo_token' => env('FCM_DEMO_TOKEN', 'dAh-b6NORSm2cgmSb-txSQ:APA91bHe-uJhnyJmtrb7qD2LG3QTo1xYRUINfLivrFEyS7bQ7Elox_Yyz7t5CKJFOU48DEsj0bOSH7fabD0gxIa0jYt-_0g3esZX3QHeWF-mDpZ8o_f7_gY'),
+    ],
+
 ];

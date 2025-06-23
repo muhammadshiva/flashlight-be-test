@@ -18,6 +18,9 @@ return new class extends Migration
             $table->timestamp('membership_expires_at')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamp('last_login_at')->nullable();
+            $table->integer('total_transactions')->default(0);
+            $table->integer('total_premium_transactions')->default(0);
+            $table->integer('total_discount_approvals')->default(0);
             $table->timestamps();
             $table->softDeletes();
         });

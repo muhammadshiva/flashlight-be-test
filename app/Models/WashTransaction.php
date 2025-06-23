@@ -19,12 +19,13 @@ class WashTransaction extends Model
     const STATUS_CANCELLED = 'cancelled';
     const PAYMENT_METHOD_CASH = 'cash';
     const PAYMENT_METHOD_CASHLESS = 'cashless';
+    const PAYMENT_METHOD_TRANSFER = 'transfer';
 
     protected $fillable = [
         'customer_id',
         'customer_vehicle_id',
         'product_id',
-        'staff_id',
+        'user_id',
         'total_price',
         'payment_method',
         'wash_date',
@@ -78,9 +79,9 @@ class WashTransaction extends Model
         return $this->belongsTo(Product::class, 'product_id');
     }
 
-    public function staff(): BelongsTo
+    public function user(): BelongsTo
     {
-        return $this->belongsTo(Staff::class);
+        return $this->belongsTo(User::class);
     }
 
     public function products(): BelongsToMany
@@ -125,6 +126,11 @@ class WashTransaction extends Model
         return $this->payment_method === self::PAYMENT_METHOD_CASHLESS;
     }
 
+    public function isTransferPayment(): bool
+    {
+        return $this->payment_method === self::PAYMENT_METHOD_TRANSFER;
+    }
+
     public static function getStatusOptions(): array
     {
         return [
@@ -140,6 +146,7 @@ class WashTransaction extends Model
         return [
             self::PAYMENT_METHOD_CASH => 'Cash',
             self::PAYMENT_METHOD_CASHLESS => 'Cashless',
+            self::PAYMENT_METHOD_TRANSFER => 'Transfer',
         ];
     }
 }

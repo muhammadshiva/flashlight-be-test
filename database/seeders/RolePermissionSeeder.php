@@ -141,22 +141,27 @@ class RolePermissionSeeder extends Seeder
             // Remove any existing roles first
             $user->syncRoles([]);
 
-            // Assign new role based on user type
+            // Assign new role based on user type with explicit web guard
             switch ($user->type) {
                 case User::TYPE_OWNER:
-                    $user->assignRole('owner');
+                    $role = Role::findByName('owner', 'web');
+                    $user->assignRole($role);
                     break;
                 case User::TYPE_ADMIN:
-                    $user->assignRole('admin');
+                    $role = Role::findByName('admin', 'web');
+                    $user->assignRole($role);
                     break;
                 case User::TYPE_CASHIER:
-                    $user->assignRole('cashier');
+                    $role = Role::findByName('cashier', 'web');
+                    $user->assignRole($role);
                     break;
                 case User::TYPE_STAFF:
-                    $user->assignRole('staff');
+                    $role = Role::findByName('staff', 'web');
+                    $user->assignRole($role);
                     break;
                 case User::TYPE_CUSTOMER:
-                    $user->assignRole('customer');
+                    $role = Role::findByName('customer', 'web');
+                    $user->assignRole($role);
                     break;
             }
         }

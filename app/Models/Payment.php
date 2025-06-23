@@ -13,6 +13,8 @@ class Payment extends Model
 
     const METHOD_CASH = 'cash';
     const METHOD_QRIS = 'qris';
+    const METHOD_TRANSFER = 'transfer';
+    const METHOD_E_WALLET = 'e_wallet';
 
     const STATUS_PENDING = 'pending';
     const STATUS_COMPLETED = 'completed';
@@ -20,7 +22,7 @@ class Payment extends Model
 
     protected $fillable = [
         'wash_transaction_id',
-        'staff_id',
+        'user_id',
         'payment_number',
         'method',
         'amount_paid',
@@ -52,9 +54,9 @@ class Payment extends Model
         return $this->belongsTo(WashTransaction::class);
     }
 
-    public function staff(): BelongsTo
+    public function user(): BelongsTo
     {
-        return $this->belongsTo(Staff::class);
+        return $this->belongsTo(User::class);
     }
 
     public function isCash(): bool
@@ -65,6 +67,16 @@ class Payment extends Model
     public function isQris(): bool
     {
         return $this->method === self::METHOD_QRIS;
+    }
+
+    public function isTransfer(): bool
+    {
+        return $this->method === self::METHOD_TRANSFER;
+    }
+
+    public function isEWallet(): bool
+    {
+        return $this->method === self::METHOD_E_WALLET;
     }
 
     public function isPending(): bool
@@ -87,6 +99,8 @@ class Payment extends Model
         return [
             self::METHOD_CASH => 'Cash',
             self::METHOD_QRIS => 'QRIS',
+            self::METHOD_TRANSFER => 'Transfer',
+            self::METHOD_E_WALLET => 'E-Wallet',
         ];
     }
 

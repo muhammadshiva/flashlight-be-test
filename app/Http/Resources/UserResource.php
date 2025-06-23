@@ -21,6 +21,8 @@ class UserResource extends JsonResource
             'phone_number' => $this->phone_number,
             'profile_image' => $this->profile_image,
             'type' => $this->type,
+            'has_fcm_token' => $this->hasFcmToken(),
+            'last_login_at' => $this->last_login_at,
         ];
 
         // Add customer data if exists

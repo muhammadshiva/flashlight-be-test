@@ -10,6 +10,9 @@ use App\Http\Controllers\Api\StaffController;
 use App\Http\Controllers\Api\CustomerVehicleController;
 use App\Http\Controllers\Api\VehicleController;
 use App\Http\Controllers\Api\WashTransactionController;
+use App\Http\Controllers\Api\TransactionPaymentController;
+use App\Http\Controllers\FCMController;
+use App\Http\Controllers\FcmTokenController;
 
 /*
 |--------------------------------------------------------------------------
@@ -20,6 +23,8 @@ use App\Http\Controllers\Api\WashTransactionController;
 Route::prefix('auth')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/login-with-fcm', [AuthController::class, 'loginWithFcm']); // New simplified login endpoint
+    Route::get('/fcm-token', [AuthController::class, 'getFcmToken'])->middleware('auth:sanctum'); // Get FCM token
     Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
     Route::post('/refresh-token', [AuthController::class, 'refreshToken'])->middleware('auth:sanctum');
 });
@@ -44,6 +49,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/profile', [UserController::class, 'profile']);
         Route::put('/profile', [UserController::class, 'updateProfile']);
         Route::put('/password', [UserController::class, 'updatePassword']);
+        Route::patch('/{id}/fcm-token', [UserController::class, 'updateFcmToken']);
         Route::get('/phone/{phoneNumber}', [UserController::class, 'getByPhoneNumber']);
     });
 
@@ -151,4 +157,36 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/trx-next-number', [WashTransactionController::class, 'getNextTransactionNumber']);
     Route::get('/trx-prev-number', [WashTransactionController::class, 'getPreviousTransactionNumber']);
+
+    /*
+    |--------------------------------------------------------------------------
+    | FCM Token Management Routes
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('fcm')->group(function () {
+        Route::patch('/token', [FcmTokenController::class, 'updateToken']);
+        Route::delete('/token', [FcmTokenController::class, 'removeToken']);
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | FCM Notification Routes
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('fcm')->group(function () {
+        Route::post('/send', [FCMController::class, 'sendNotification']);
+        Route::post('/send-multiple', [FCMController::class, 'sendMultipleNotifications']);
+        Route::get('/test', [FCMController::class, 'testConnection']);
+        Route::get('/config', [FCMController::class, 'getConfigStatus']);
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Transaction Payment Routes
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('payment')->group(function () {
+        Route::post('/send-transaction-data', [TransactionPaymentController::class, 'sendTransactionData']);
+        Route::get('/ongoing-transaction-data', [TransactionPaymentController::class, 'getOngoingTransactionData']);
+    });
 });
