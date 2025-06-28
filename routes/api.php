@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\CustomerVehicleController;
 use App\Http\Controllers\Api\VehicleController;
 use App\Http\Controllers\Api\WashTransactionController;
 use App\Http\Controllers\Api\TransactionPaymentController;
+use App\Http\Controllers\Api\ShiftController;
 use App\Http\Controllers\FCMController;
 use App\Http\Controllers\FcmTokenController;
 
@@ -157,6 +158,21 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/trx-next-number', [WashTransactionController::class, 'getNextTransactionNumber']);
     Route::get('/trx-prev-number', [WashTransactionController::class, 'getPreviousTransactionNumber']);
+
+    /*
+    |--------------------------------------------------------------------------
+    | Shift Management Routes
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('shifts')->group(function () {
+        Route::post('/start', [ShiftController::class, 'start']);
+        Route::post('/end', [ShiftController::class, 'end']);
+        Route::get('/current', [ShiftController::class, 'current']);
+        Route::get('/status', [ShiftController::class, 'status']);
+        Route::get('/history', [ShiftController::class, 'history']);
+        Route::get('/{id}', [ShiftController::class, 'show']);
+        Route::get('/{id}/transactions', [ShiftController::class, 'transactions']);
+    });
 
     /*
     |--------------------------------------------------------------------------

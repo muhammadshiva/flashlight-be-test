@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\WashTransaction;
 use App\Models\Product;
 use App\Models\Customer;
+use App\Models\Shift;
 use App\Traits\ApiResponse;
 use Exception;
 use Illuminate\Http\Request;
@@ -16,16 +17,24 @@ class WashTransactionController extends Controller
 {
     use ApiResponse;
 
-    public function index()
+    public function index(Request $request)
     {
         try {
-            $transactions = WashTransaction::with([
+            $query = WashTransaction::with([
                 'customer.user',
                 'customerVehicle',
                 'primaryProduct',
                 'products',
-                'user'
-            ])->latest()->get();
+                'user',
+                'shift'
+            ]);
+
+            // Filter by shift_id if provided
+            if ($request->has('shift_id')) {
+                $query->where('shift_id', $request->shift_id);
+            }
+
+            $transactions = $query->latest()->get();
 
             // Format the response to ensure total_price is float and add total_premium_transactions
             $transactions->transform(function ($transaction) {
@@ -88,6 +97,9 @@ class WashTransactionController extends Controller
                     $totalPrice += $product->price * $productData['quantity'];
                 }
 
+                // Get active shift for the user
+                $activeShift = Shift::getActiveShift($request->user_id);
+
                 // Create wash transaction
                 $transaction = WashTransaction::create([
                     'transaction_number' => $transactionNumber,
@@ -95,6 +107,7 @@ class WashTransactionController extends Controller
                     'customer_vehicle_id' => $request->customer_vehicle_id,
                     'product_id' => $request->product_id,
                     'user_id' => $request->user_id,
+                    'shift_id' => $activeShift?->id,
                     'total_price' => $totalPrice,
                     'payment_method' => $request->payment_method,
                     'wash_date' => $request->wash_date,

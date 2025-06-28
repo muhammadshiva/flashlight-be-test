@@ -26,6 +26,7 @@ class WashTransaction extends Model
         'customer_vehicle_id',
         'product_id',
         'user_id',
+        'shift_id',
         'total_price',
         'payment_method',
         'wash_date',
@@ -82,6 +83,11 @@ class WashTransaction extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function shift(): BelongsTo
+    {
+        return $this->belongsTo(Shift::class);
     }
 
     public function products(): BelongsToMany

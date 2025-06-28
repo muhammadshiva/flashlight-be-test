@@ -171,6 +171,11 @@ class User extends Authenticatable
         return $this->hasMany(WashTransaction::class);
     }
 
+    public function shifts(): HasMany
+    {
+        return $this->hasMany(Shift::class);
+    }
+
     public function customer(): HasOne
     {
         return $this->hasOne(Customer::class);
