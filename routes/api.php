@@ -27,6 +27,7 @@ Route::prefix('auth')->group(function () {
     Route::post('/login-with-fcm', [AuthController::class, 'loginWithFcm']); // New simplified login endpoint
     Route::get('/fcm-token', [AuthController::class, 'getFcmToken'])->middleware('auth:sanctum'); // Get FCM token
     Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
+    Route::post('/device-logout', [AuthController::class, 'deviceLogout'])->middleware('auth:sanctum'); // New device-specific logout
     Route::post('/refresh-token', [AuthController::class, 'refreshToken'])->middleware('auth:sanctum');
 });
 

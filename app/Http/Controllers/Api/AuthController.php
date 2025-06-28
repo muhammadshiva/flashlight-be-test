@@ -229,4 +229,53 @@ class AuthController extends Controller
             return $this->handleException($e);
         }
     }
+
+    /**
+     * Device-specific logout that handles FCM tokens
+     * POST /api/auth/device-logout
+     */
+    public function deviceLogout(Request $request)
+    {
+        try {
+            DB::beginTransaction();
+
+            $user = $request->user();
+
+            // Validate request
+            $request->validate([
+                'device_id' => ['nullable', 'string'],
+            ]);
+
+            // Get device ID from request or use null for current device only
+            $deviceId = $request->device_id;
+
+            // If device ID provided, mark that device's FCM token as inactive
+            if ($deviceId) {
+                $deviceToken = DeviceFcmToken::where('device_id', $deviceId)
+                    ->where('is_active', true)
+                    ->first();
+
+                if ($deviceToken) {
+                    $deviceToken->markAsInactive();
+                }
+            }
+
+            // Revoke tokens for this device only (not all user's tokens)
+            if ($request->bearerToken()) {
+                // Extract token ID from the bearer token
+                $tokenId = explode('|', $request->bearerToken())[0] ?? null;
+
+                if ($tokenId) {
+                    // Delete only the current token
+                    $user->tokens()->where('id', $tokenId)->delete();
+                }
+            }
+
+            DB::commit();
+            return $this->successResponse(null, 'Device logged out successfully');
+        } catch (Exception $e) {
+            DB::rollBack();
+            return $this->handleException($e);
+        }
+    }
 }
