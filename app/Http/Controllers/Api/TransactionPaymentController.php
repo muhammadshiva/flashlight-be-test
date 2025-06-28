@@ -127,7 +127,9 @@ class TransactionPaymentController extends Controller
                 'customer_name' => $transaction->customer->user->name ?? 'Guest',
                 'vehicle_info' => $transaction->customerVehicle ? [
                     'license_plate' => $transaction->customerVehicle->license_plate,
-                    'vehicle_name' => $transaction->customerVehicle->vehicle->name ?? 'Unknown Vehicle',
+                    'vehicle_name' => $transaction->customerVehicle->vehicle ?
+                        $transaction->customerVehicle->vehicle->brand . ' ' . $transaction->customerVehicle->vehicle->model :
+                        'Unknown Vehicle',
                 ] : null,
                 'services' => $transaction->products->map(function ($product) {
                     return [
