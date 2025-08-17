@@ -4,6 +4,9 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Payment;
+use App\Models\PaymentItem;
+use App\Models\Voucher;
+use App\Models\PremiumCounter;
 use App\Models\WashTransaction;
 use App\Models\User;
 use App\Services\FCMService;
@@ -12,6 +15,8 @@ use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Auth;
 
 class TransactionPaymentController extends Controller
 {
@@ -37,12 +42,14 @@ class TransactionPaymentController extends Controller
                 'amount_paid' => ['nullable', 'numeric', 'min:0'],
                 'customer_id' => ['nullable', 'integer', 'exists:customers,id'],
                 'notes' => ['nullable', 'string', 'max:500'],
+                'voucher_code' => ['nullable', 'string', 'max:100'],
+                'benefit_fd_amount' => ['nullable', 'numeric', 'min:0'],
             ]);
 
             DB::beginTransaction();
 
             // Get the wash transaction
-            $washTransaction = WashTransaction::with(['customer.user', 'user', 'customerVehicle', 'products'])->findOrFail($request->wash_transaction_id);
+            $washTransaction = WashTransaction::with(['customer.user', 'user', 'customerVehicle', 'products', 'workOrder'])->findOrFail($request->wash_transaction_id);
 
             // Verify transaction is valid for payment processing
             if ($washTransaction->isCompleted()) {
@@ -53,22 +60,138 @@ class TransactionPaymentController extends Controller
                 return $this->errorResponse('Cannot process payment for cancelled transaction.', 400);
             }
 
-            // Update wash transaction but don't complete yet - let cashier process payment
+            // Update wash transaction
             $washTransaction->update([
                 'status' => WashTransaction::STATUS_IN_PROGRESS,
                 'total_price' => $request->total_amount,
                 'payment_method' => $request->payment_method,
             ]);
 
+            // Create payment
+            $amountPaid = $request->amount_paid ?? $request->total_amount;
+            $change = max(0, $amountPaid - $request->total_amount);
+            $payment = Payment::create([
+                'wash_transaction_id' => $washTransaction->id,
+                'user_id' => Auth::id(),
+                'work_order_id' => $washTransaction->work_order_id,
+                'method' => $this->mapPaymentMethod($request->payment_method),
+                'amount_paid' => $amountPaid,
+                'change_amount' => $change,
+                'status' => Payment::STATUS_COMPLETED,
+                'paid_at' => now(),
+            ]);
+
+            // Add line items from services
+            $grossTotal = 0.0;
+            foreach ($washTransaction->services as $service) {
+                $lineAmount = (float) ($service->pivot->subtotal ?? 0);
+                $grossTotal += $lineAmount;
+                PaymentItem::create([
+                    'payment_id' => $payment->id,
+                    'line_type' => 'service',
+                    'reference_id' => $service->id,
+                    'description' => $service->name,
+                    'quantity' => (int) ($service->pivot->quantity ?? 1),
+                    'unit_amount' => (float) ($service->pivot->price ?? 0),
+                    'line_total' => $lineAmount,
+                ]);
+            }
+
+            // Add line items from F&D
+            foreach ($washTransaction->fds as $fd) {
+                $lineAmount = (float) ($fd->pivot->subtotal ?? 0);
+                $grossTotal += $lineAmount;
+                PaymentItem::create([
+                    'payment_id' => $payment->id,
+                    'line_type' => 'fd',
+                    'reference_id' => $fd->id,
+                    'description' => $fd->name,
+                    'quantity' => (int) ($fd->pivot->quantity ?? 1),
+                    'unit_amount' => (float) ($fd->pivot->price ?? 0),
+                    'line_total' => $lineAmount,
+                ]);
+            }
+
+            // Apply voucher
+            if ($request->filled('voucher_code')) {
+                $voucher = Voucher::where('code', $request->voucher_code)->where('status', 'active')->first();
+                if ($voucher) {
+                    $discount = 0.0;
+                    if ($voucher->type === 'free_wash') {
+                        $primary = $washTransaction->services()->where('service_item_id', $washTransaction->main_service_item_id)->first();
+                        $discount = (float) ($primary?->pivot?->subtotal ?? 0);
+                    } elseif ($voucher->type === 'discount_amount') {
+                        $discount = (float) $voucher->amount;
+                    } elseif ($voucher->type === 'discount_percent') {
+                        $discount = round($grossTotal * ((int) $voucher->percent) / 100, 2);
+                    }
+
+                    if ($discount > 0) {
+                        PaymentItem::create([
+                            'payment_id' => $payment->id,
+                            'line_type' => 'voucher',
+                            'reference_id' => $voucher->id,
+                            'description' => 'Voucher ' . $voucher->code,
+                            'quantity' => 1,
+                            'unit_amount' => -abs($discount),
+                            'line_total' => -abs($discount),
+                        ]);
+                        $grossTotal -= abs($discount);
+                        $voucher->update(['status' => 'used', 'used_at' => now()]);
+                    }
+                }
+            }
+
+            // Apply Friend FD benefit
+            if ($request->filled('benefit_fd_amount') && (float) $request->benefit_fd_amount > 0) {
+                PaymentItem::create([
+                    'payment_id' => $payment->id,
+                    'line_type' => 'benefit_fd',
+                    'reference_id' => null,
+                    'description' => 'Friend F&D Benefit',
+                    'quantity' => 1,
+                    'unit_amount' => -abs((float) $request->benefit_fd_amount),
+                    'line_total' => -abs((float) $request->benefit_fd_amount),
+                ]);
+                $grossTotal -= abs((float) $request->benefit_fd_amount);
+            }
+
+            // Update transaction status to completed
+            $washTransaction->update(['status' => WashTransaction::STATUS_COMPLETED]);
+
+            // Premium counter handling for premium transactions
+            $isPremium = (bool) $washTransaction->primaryProduct?->is_premium;
+            if ($isPremium && $washTransaction->customer) {
+                $month = (int) date('n');
+                $year = (int) date('Y');
+                $counter = PremiumCounter::firstOrCreate([
+                    'customer_id' => $washTransaction->customer->id,
+                    'month' => $month,
+                    'year' => $year,
+                ]);
+                $counter->increment('premium_count');
+                $counter->refresh();
+                if ($counter->premium_count > 0 && $counter->premium_count % 5 === 0) {
+                    Voucher::create([
+                        'code' => 'FW-' . date('Ymd') . '-' . strtoupper(Str::random(6)),
+                        'customer_id' => $washTransaction->customer->id,
+                        'type' => 'free_wash',
+                        'status' => 'active',
+                        'issued_at' => now(),
+                        'activated_at' => now(),
+                        'expires_at' => now()->addMonth(),
+                    ]);
+                }
+            }
+
             DB::commit();
 
-            // Prepare response data
-            $responseData = [
-                'wash_transaction' => $washTransaction->load(['customer', 'customerVehicle', 'products']),
-                'message' => 'Transaction updated and ready for payment processing by cashier.',
-            ];
+            $this->sendPaymentCompletionNotification($washTransaction->fresh(), $payment->fresh());
 
-            return $this->successResponse($responseData, 'Transaction data received successfully and ready for cashier processing');
+            return $this->successResponse([
+                'wash_transaction' => $washTransaction->fresh()->load(['customer', 'customerVehicle', 'products']),
+                'payment' => $payment->load('items'),
+            ], 'Payment completed');
         } catch (Exception $e) {
             DB::rollBack();
             Log::error('Transaction payment processing failed: ' . $e->getMessage(), [
@@ -85,7 +208,7 @@ class TransactionPaymentController extends Controller
     public function getOngoingTransactionData(Request $request)
     {
         try {
-            $user = auth()->user();
+            $user = Auth::user();
 
             // Find the most recent completed transaction for this customer
             $query = WashTransaction::with(['payments', 'customer', 'customerVehicle.vehicle', 'products'])
@@ -93,7 +216,7 @@ class TransactionPaymentController extends Controller
                 ->orderBy('updated_at', 'desc');
 
             // If user is a customer, filter by customer_id
-            if ($user->isCustomer() && $user->customer) {
+            if ($user && (($user->type ?? null) === \App\Models\User::TYPE_CUSTOMER) && $user->customer) {
                 $query->where('customer_id', $user->customer->id);
             }
 

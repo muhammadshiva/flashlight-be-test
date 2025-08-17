@@ -24,8 +24,9 @@ class WashTransaction extends Model
     protected $fillable = [
         'customer_id',
         'customer_vehicle_id',
-        'product_id',
+        'main_service_item_id',
         'user_id',
+        'work_order_id',
         'shift_id',
         'total_price',
         'payment_method',
@@ -75,9 +76,9 @@ class WashTransaction extends Model
         return $this->belongsTo(CustomerVehicle::class);
     }
 
-    public function primaryProduct(): BelongsTo
+    public function mainServiceItem(): BelongsTo
     {
-        return $this->belongsTo(Product::class, 'product_id');
+        return $this->belongsTo(ServiceItem::class, 'main_service_item_id');
     }
 
     public function user(): BelongsTo
@@ -90,9 +91,16 @@ class WashTransaction extends Model
         return $this->belongsTo(Shift::class);
     }
 
-    public function products(): BelongsToMany
+    public function services(): BelongsToMany
     {
-        return $this->belongsToMany(Product::class, 'wash_transaction_products')
+        return $this->belongsToMany(ServiceItem::class, 'wash_transaction_services')
+            ->withPivot(['quantity', 'price', 'subtotal'])
+            ->withTimestamps();
+    }
+
+    public function fds(): BelongsToMany
+    {
+        return $this->belongsToMany(FdItem::class, 'wash_transaction_fds')
             ->withPivot(['quantity', 'price', 'subtotal'])
             ->withTimestamps();
     }
@@ -100,6 +108,11 @@ class WashTransaction extends Model
     public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);
+    }
+
+    public function workOrder(): BelongsTo
+    {
+        return $this->belongsTo(WorkOrder::class);
     }
 
     public function isPending(): bool

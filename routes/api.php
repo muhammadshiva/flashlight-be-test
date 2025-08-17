@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\VehicleController;
 use App\Http\Controllers\Api\WashTransactionController;
 use App\Http\Controllers\Api\TransactionPaymentController;
 use App\Http\Controllers\Api\ShiftController;
+use App\Http\Controllers\Api\WorkOrderController;
 use App\Http\Controllers\FCMController;
 use App\Http\Controllers\FcmTokenController;
 
@@ -71,30 +72,72 @@ Route::middleware('auth:sanctum')->group(function () {
 
     /*
     |--------------------------------------------------------------------------
-    | Product Management Routes
+    | Product Management Routes (legacy) — disabled after total migration
     |--------------------------------------------------------------------------
     */
-    Route::prefix('products')->group(function () {
-        Route::get('/', [ProductController::class, 'index']);
-        Route::post('/', [ProductController::class, 'store']);
-        Route::get('/{id}', [ProductController::class, 'show']);
-        Route::put('/{id}', [ProductController::class, 'update']);
-        Route::delete('/{id}', [ProductController::class, 'destroy']);
-        Route::post('/{id}/restore', [ProductController::class, 'restore']);
-    });
+    // Route::prefix('products')->group(function () {
+    //     Route::get('/', [ProductController::class, 'index']);
+    //     Route::post('/', [ProductController::class, 'store']);
+    //     Route::get('/{id}', [ProductController::class, 'show']);
+    //     Route::put('/{id}', [ProductController::class, 'update']);
+    //     Route::delete('/{id}', [ProductController::class, 'destroy']);
+    //     Route::post('/{id}/restore', [ProductController::class, 'restore']);
+    // });
 
     /*
     |--------------------------------------------------------------------------
-    | Product Category Management Routes
+    | Product Category Management Routes (legacy) — disabled after total migration
     |--------------------------------------------------------------------------
     */
-    Route::prefix('product-categories')->group(function () {
-        Route::get('/', [ProductCategoryController::class, 'index']);
-        Route::post('/', [ProductCategoryController::class, 'store']);
-        Route::get('/{id}', [ProductCategoryController::class, 'show']);
-        Route::put('/{id}', [ProductCategoryController::class, 'update']);
-        Route::delete('/{id}', [ProductCategoryController::class, 'destroy']);
-        Route::post('/{id}/restore', [ProductCategoryController::class, 'restore']);
+    // Route::prefix('product-categories')->group(function () {
+    //     Route::get('/', [ProductCategoryController::class, 'index']);
+    //     Route::post('/', [ProductCategoryController::class, 'store']);
+    //     Route::get('/{id}', [ProductCategoryController::class, 'show']);
+    //     Route::put('/{id}', [ProductCategoryController::class, 'update']);
+    //     Route::delete('/{id}', [ProductCategoryController::class, 'destroy']);
+    //     Route::post('/{id}/restore', [ProductCategoryController::class, 'restore']);
+    // });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Catalog Routes (Service Items, Price Matrix, F&D)
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('catalog')->group(function () {
+        Route::get('/services', [\App\Http\Controllers\Api\ServiceItemController::class, 'index']);
+        Route::post('/services', [\App\Http\Controllers\Api\ServiceItemController::class, 'store']);
+        Route::get('/services/{serviceItem}', [\App\Http\Controllers\Api\ServiceItemController::class, 'show']);
+        Route::put('/services/{serviceItem}', [\App\Http\Controllers\Api\ServiceItemController::class, 'update']);
+        Route::delete('/services/{serviceItem}', [\App\Http\Controllers\Api\ServiceItemController::class, 'destroy']);
+
+        Route::get('/price-matrix', [\App\Http\Controllers\Api\PriceMatrixController::class, 'index']);
+        Route::post('/price-matrix', [\App\Http\Controllers\Api\PriceMatrixController::class, 'store']);
+        Route::put('/price-matrix/{priceMatrix}', [\App\Http\Controllers\Api\PriceMatrixController::class, 'update']);
+        Route::delete('/price-matrix/{priceMatrix}', [\App\Http\Controllers\Api\PriceMatrixController::class, 'destroy']);
+
+        Route::get('/fd-items', [\App\Http\Controllers\Api\FdItemController::class, 'index']);
+        Route::post('/fd-items', [\App\Http\Controllers\Api\FdItemController::class, 'store']);
+        Route::get('/fd-items/{fdItem}', [\App\Http\Controllers\Api\FdItemController::class, 'show']);
+        Route::put('/fd-items/{fdItem}', [\App\Http\Controllers\Api\FdItemController::class, 'update']);
+        Route::delete('/fd-items/{fdItem}', [\App\Http\Controllers\Api\FdItemController::class, 'destroy']);
+
+        // Dimensions
+        Route::get('/engine-classes', [\App\Http\Controllers\Api\DimensionController::class, 'listEngineClasses']);
+        Route::post('/engine-classes', [\App\Http\Controllers\Api\DimensionController::class, 'createEngineClass']);
+        Route::put('/engine-classes/{engineClass}', [\App\Http\Controllers\Api\DimensionController::class, 'updateEngineClass']);
+        Route::delete('/engine-classes/{engineClass}', [\App\Http\Controllers\Api\DimensionController::class, 'deleteEngineClass']);
+        Route::get('/helmet-types', [\App\Http\Controllers\Api\DimensionController::class, 'listHelmetTypes']);
+        Route::post('/helmet-types', [\App\Http\Controllers\Api\DimensionController::class, 'createHelmetType']);
+        Route::put('/helmet-types/{helmetType}', [\App\Http\Controllers\Api\DimensionController::class, 'updateHelmetType']);
+        Route::delete('/helmet-types/{helmetType}', [\App\Http\Controllers\Api\DimensionController::class, 'deleteHelmetType']);
+        Route::get('/car-sizes', [\App\Http\Controllers\Api\DimensionController::class, 'listCarSizes']);
+        Route::post('/car-sizes', [\App\Http\Controllers\Api\DimensionController::class, 'createCarSize']);
+        Route::put('/car-sizes/{carSize}', [\App\Http\Controllers\Api\DimensionController::class, 'updateCarSize']);
+        Route::delete('/car-sizes/{carSize}', [\App\Http\Controllers\Api\DimensionController::class, 'deleteCarSize']);
+        Route::get('/apparel-types', [\App\Http\Controllers\Api\DimensionController::class, 'listApparelTypes']);
+        Route::post('/apparel-types', [\App\Http\Controllers\Api\DimensionController::class, 'createApparelType']);
+        Route::put('/apparel-types/{apparelType}', [\App\Http\Controllers\Api\DimensionController::class, 'updateApparelType']);
+        Route::delete('/apparel-types/{apparelType}', [\App\Http\Controllers\Api\DimensionController::class, 'deleteApparelType']);
     });
 
     /*
@@ -155,6 +198,19 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/{id}/complete', [WashTransactionController::class, 'complete']);
         Route::post('/{id}/cancel', [WashTransactionController::class, 'cancel']);
         Route::delete('/{id}', [WashTransactionController::class, 'destroy']);
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Work Orders (Kiosk) Routes
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('work-orders')->group(function () {
+        Route::get('/', [WorkOrderController::class, 'index']);
+        Route::post('/', [WorkOrderController::class, 'store']);
+        Route::get('/{workOrder}', [WorkOrderController::class, 'show']);
+        Route::put('/{workOrder}', [WorkOrderController::class, 'update']);
+        Route::post('/quote', [WorkOrderController::class, 'quote']);
     });
 
     Route::get('/trx-next-number', [WashTransactionController::class, 'getNextTransactionNumber']);

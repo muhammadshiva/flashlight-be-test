@@ -15,6 +15,8 @@ class MembershipType extends Model
         'name',
         'benefits',
         'is_active',
+        'price',
+        'duration_days',
     ];
 
     protected $casts = [

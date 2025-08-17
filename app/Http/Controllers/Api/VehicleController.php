@@ -66,11 +66,9 @@ class VehicleController extends Controller
     {
         try {
             $validator = Validator::make($request->all(), [
-                'user_id' => 'sometimes|required|exists:users,id',
-                'license_plate' => 'sometimes|required|string|max:20|unique:vehicles,license_plate,' . $vehicle->id,
                 'brand' => 'sometimes|required|string|max:255',
                 'model' => 'sometimes|required|string|max:255',
-                'color' => 'sometimes|required|string|max:50',
+                'color' => 'sometimes|nullable|string|max:50',
                 'vehicle_type' => 'sometimes|required|string|max:50',
             ]);
 
@@ -81,7 +79,7 @@ class VehicleController extends Controller
             DB::beginTransaction();
 
             try {
-                $vehicle->update($request->all());
+                $vehicle->update($request->only(['brand', 'model', 'color', 'vehicle_type']));
                 DB::commit();
                 return $this->successResponse($vehicle, 'Vehicle updated successfully');
             } catch (Exception $e) {

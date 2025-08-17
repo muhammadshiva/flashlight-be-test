@@ -16,8 +16,8 @@ class FinisherQueueController extends Controller
             'customer.user',
             'customer.membershipType',
             'customerVehicle.vehicle',
-            'products',
-            'primaryProduct'
+            'services',
+            'mainServiceItem'
         ])
             ->whereIn('status', [
                 WashTransaction::STATUS_PENDING,
@@ -27,23 +27,17 @@ class FinisherQueueController extends Controller
             ->get()
             ->map(function ($transaction) {
                 // Get additional services (excluding primary service)
-                $additionalServices = $transaction->products()
-                    ->where('product_id', '!=', $transaction->product_id)
-                    ->whereHas('category', function ($query) {
-                        $query->whereNotIn('name', ['Food', 'Drinks', 'Makanan', 'Minuman']);
-                    })
+                $additionalServices = $transaction->services()
+                    ->where('service_item_id', '!=', $transaction->main_service_item_id)
                     ->get()
                     ->pluck('name')
                     ->toArray();
 
                 // Get food and drinks
-                $foodDrinks = $transaction->products()
-                    ->whereHas('category', function ($query) {
-                        $query->whereIn('name', ['Food', 'Drinks', 'Makanan', 'Minuman']);
-                    })
+                $foodDrinks = $transaction->fds()
                     ->get()
-                    ->map(function ($product) {
-                        return $product->name . ' (' . $product->pivot->quantity . ')';
+                    ->map(function ($fd) {
+                        return $fd->name . ' (' . $fd->pivot->quantity . ')';
                     })
                     ->toArray();
 

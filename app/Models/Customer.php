@@ -23,6 +23,7 @@ class Customer extends Model
         'membership_type_id',
         'membership_status',
         'membership_expires_at',
+        'chosen_benefit',
         'is_active',
         'last_login_at',
         'total_transactions',
