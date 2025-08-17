@@ -1,0 +1,909 @@
+{
+	"info": {
+		"_postman_id": "flashlight-api-collection",
+		"name": "Flashlight Backend API",
+		"description": "Complete API collection for Flashlight Backend system",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000/api",
+			"type": "string"
+		},
+		{
+			"key": "token",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{token}}",
+				"type": "string"
+			}
+		]
+	},
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Register",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"John Doe\",\n    \"email\": \"john@example.com\",\n    \"password\": \"password123\",\n    \"password_confirmation\": \"password123\",\n    \"phone\": \"+6281234567890\",\n    \"user_type\": \"customer\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/register",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "register"]
+						}
+					}
+				},
+				{
+					"name": "Login",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"john@example.com\",\n    \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/login",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "login"]
+						}
+					}
+				},
+				{
+					"name": "Login with FCM",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"john@example.com\",\n    \"password\": \"password123\",\n    \"fcm_token\": \"fcm_token_here\",\n    \"device_id\": \"device_123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/login-with-fcm",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "login-with-fcm"]
+						}
+					}
+				},
+				{
+					"name": "Get FCM Token",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/auth/fcm-token",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "fcm-token"]
+						}
+					}
+				},
+				{
+					"name": "Logout",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/auth/logout",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "logout"]
+						}
+					}
+				},
+				{
+					"name": "Device Logout",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"device_id\": \"device_123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/device-logout",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "device-logout"]
+						}
+					}
+				},
+				{
+					"name": "Refresh Token",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/auth/refresh-token",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "refresh-token"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Customers",
+			"item": [
+				{
+					"name": "Get All Customers",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/customers",
+							"host": ["{{base_url}}"],
+							"path": ["customers"]
+						}
+					}
+				},
+				{
+					"name": "Create Customer",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"user_id\": 1,\n    \"membership_type_id\": 1,\n    \"membership_expiry\": \"2024-12-31\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/customers",
+							"host": ["{{base_url}}"],
+							"path": ["customers"]
+						}
+					}
+				},
+				{
+					"name": "Get Customer by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/customers/1",
+							"host": ["{{base_url}}"],
+							"path": ["customers", "1"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Users",
+			"item": [
+				{
+					"name": "Get All Users",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/users",
+							"host": ["{{base_url}}"],
+							"path": ["users"]
+						}
+					}
+				},
+				{
+					"name": "Create User",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Jane Doe\",\n    \"email\": \"jane@example.com\",\n    \"password\": \"password123\",\n    \"password_confirmation\": \"password123\",\n    \"phone\": \"+6281234567891\",\n    \"user_type\": \"staff\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/users",
+							"host": ["{{base_url}}"],
+							"path": ["users"]
+						}
+					}
+				},
+				{
+					"name": "Get User by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/users/1",
+							"host": ["{{base_url}}"],
+							"path": ["users", "1"]
+						}
+					}
+				},
+				{
+					"name": "Update User",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"John Updated\",\n    \"phone\": \"+6281234567899\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/users/1",
+							"host": ["{{base_url}}"],
+							"path": ["users", "1"]
+						}
+					}
+				},
+				{
+					"name": "Delete User",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/users/1",
+							"host": ["{{base_url}}"],
+							"path": ["users", "1"]
+						}
+					}
+				},
+				{
+					"name": "Get Profile",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/users/profile",
+							"host": ["{{base_url}}"],
+							"path": ["users", "profile"]
+						}
+					}
+				},
+				{
+					"name": "Update Profile",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"John Updated\",\n    \"phone\": \"+6281234567899\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/users/profile",
+							"host": ["{{base_url}}"],
+							"path": ["users", "profile"]
+						}
+					}
+				},
+				{
+					"name": "Update Password",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"current_password\": \"oldpassword\",\n    \"password\": \"newpassword123\",\n    \"password_confirmation\": \"newpassword123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/users/password",
+							"host": ["{{base_url}}"],
+							"path": ["users", "password"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Memberships",
+			"item": [
+				{
+					"name": "Get All Memberships",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/memberships",
+							"host": ["{{base_url}}"],
+							"path": ["memberships"]
+						}
+					}
+				},
+				{
+					"name": "Create Membership",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Premium\",\n    \"description\": \"Premium membership\",\n    \"price\": 200000,\n    \"duration_days\": 60\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/memberships",
+							"host": ["{{base_url}}"],
+							"path": ["memberships"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Product Categories",
+			"item": [
+				{
+					"name": "Get All Product Categories",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/product-categories",
+							"host": ["{{base_url}}"],
+							"path": ["product-categories"]
+						}
+					}
+				},
+				{
+					"name": "Create Product Category",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Detailing Services\",\n    \"description\": \"Professional car detailing services\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/product-categories",
+							"host": ["{{base_url}}"],
+							"path": ["product-categories"]
+						}
+					}
+				},
+				{
+					"name": "Get Product Category by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/product-categories/1",
+							"host": ["{{base_url}}"],
+							"path": ["product-categories", "1"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Work Orders",
+			"item": [
+				{
+					"name": "Get All Work Orders",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/work-orders",
+							"host": ["{{base_url}}"],
+							"path": ["work-orders"]
+						}
+					}
+				},
+				{
+					"name": "Create Work Order",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"customer_id\": 1,\n    \"products\": [\n        {\n            \"product_id\": 1,\n            \"quantity\": 2\n        },\n        {\n            \"product_id\": 2,\n            \"quantity\": 1\n        }\n    ]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/work-orders",
+							"host": ["{{base_url}}"],
+							"path": ["work-orders"]
+						}
+					}
+				},
+				{
+					"name": "Get Queue",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/work-orders/queue",
+							"host": ["{{base_url}}"],
+							"path": ["work-orders", "queue"]
+						}
+					}
+				},
+				{
+					"name": "Confirm Work Order",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/work-orders/1/confirm",
+							"host": ["{{base_url}}"],
+							"path": ["work-orders", "1", "confirm"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Vehicles",
+			"item": [
+				{
+					"name": "Get All Vehicles",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/vehicles",
+							"host": ["{{base_url}}"],
+							"path": ["vehicles"]
+						}
+					}
+				},
+				{
+					"name": "Create Vehicle",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"brand\": \"Honda\",\n    \"model\": \"Brio\",\n    \"year\": 2021,\n    \"color\": \"Red\",\n    \"license_plate\": \"B 5678 DEF\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/vehicles",
+							"host": ["{{base_url}}"],
+							"path": ["vehicles"]
+						}
+					}
+				},
+				{
+					"name": "Get Vehicle by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/vehicles/1",
+							"host": ["{{base_url}}"],
+							"path": ["vehicles", "1"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Customer Vehicles",
+			"item": [
+				{
+					"name": "Get All Customer Vehicles",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/customer-vehicles",
+							"host": ["{{base_url}}"],
+							"path": ["customer-vehicles"]
+						}
+					}
+				},
+				{
+					"name": "Get Customer Vehicles by Customer ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/customer-vehicles/customer/1",
+							"host": ["{{base_url}}"],
+							"path": ["customer-vehicles", "customer", "1"]
+						}
+					}
+				},
+				{
+					"name": "Create Customer Vehicle",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"customer_id\": 1,\n    \"vehicle_id\": 2,\n    \"is_primary\": false\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/customer-vehicles",
+							"host": ["{{base_url}}"],
+							"path": ["customer-vehicles"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Wash Transactions",
+			"item": [
+				{
+					"name": "Get All Wash Transactions",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/wash-transactions",
+							"host": ["{{base_url}}"],
+							"path": ["wash-transactions"]
+						}
+					}
+				},
+				{
+					"name": "Create Wash Transaction",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"customer_id\": 1,\n    \"vehicle_id\": 1,\n    \"products\": [\n        {\n            \"product_id\": 1,\n            \"quantity\": 1\n        }\n    ],\n    \"total_price\": 50000\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/wash-transactions",
+							"host": ["{{base_url}}"],
+							"path": ["wash-transactions"]
+						}
+					}
+				},
+				{
+					"name": "Start Service",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/wash-transactions/1/start-service",
+							"host": ["{{base_url}}"],
+							"path": ["wash-transactions", "1", "start-service"]
+						}
+					}
+				},
+				{
+					"name": "Complete Service",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/wash-transactions/1/complete-service",
+							"host": ["{{base_url}}"],
+							"path": ["wash-transactions", "1", "complete-service"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "POS Transactions",
+			"item": [
+				{
+					"name": "Get All POS Transactions",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/pos-transactions",
+							"host": ["{{base_url}}"],
+							"path": ["pos-transactions"]
+						}
+					}
+				},
+				{
+					"name": "Create POS Transaction",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"customer_id\": 1,\n    \"products\": [\n        {\n            \"product_id\": 1,\n            \"quantity\": 1,\n            \"price\": 50000\n        }\n    ],\n    \"payment_method\": \"cash\",\n    \"total_amount\": 50000\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/pos-transactions",
+							"host": ["{{base_url}}"],
+							"path": ["pos-transactions"]
+						}
+					}
+				},
+				{
+					"name": "Process Wash Transaction Payment",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"payment_method\": \"cash\",\n    \"amount_paid\": 100000,\n    \"shift_id\": 1\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/pos-transactions/wash-transaction/1/payment",
+							"host": ["{{base_url}}"],
+							"path": ["pos-transactions", "wash-transaction", "1", "payment"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Staff",
+			"item": [
+				{
+					"name": "Get All Staff",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/staff",
+							"host": ["{{base_url}}"],
+							"path": ["staff"]
+						}
+					}
+				},
+				{
+					"name": "Create Staff",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"user_id\": 3,\n    \"position\": \"Washer\",\n    \"hire_date\": \"2024-01-15\",\n    \"salary\": 2500000\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/staff",
+							"host": ["{{base_url}}"],
+							"path": ["staff"]
+						}
+					}
+				},
+				{
+					"name": "Get Staff by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/staff/1",
+							"host": ["{{base_url}}"],
+							"path": ["staff", "1"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Shifts",
+			"item": [
+				{
+					"name": "Start Shift",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"user_id\": 1,\n    \"start_time\": \"2024-01-01T08:00:00\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/shifts/start",
+							"host": ["{{base_url}}"],
+							"path": ["shifts", "start"]
+						}
+					}
+				},
+				{
+					"name": "End Shift",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"shift_id\": 1,\n    \"end_time\": \"2024-01-01T17:00:00\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/pos-transactions",
+							"host": ["{{base_url}}"],
+							"path": ["shifts", "end"]
+						}
+					}
+				},
+				{
+					"name": "Get Current Shift",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/shifts/current",
+							"host": ["{{base_url}}"],
+							"path": ["shifts", "current"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Legacy Transactions",
+			"item": [
+				{
+					"name": "Get All Legacy Transactions",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/transactions",
+							"host": ["{{base_url}}"],
+							"path": ["transactions"]
+						}
+					}
+				},
+				{
+					"name": "Create Legacy Transaction",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"customer_id\": 1,\n    \"total_price\": 100000\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/transactions",
+							"host": ["{{base_url}}"],
+							"path": ["transactions"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "FCM",
+			"item": [
+				{
+					"name": "Update FCM Token",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"fcm_token\": \"new_fcm_token_here\",\n    \"device_id\": \"device_123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/fcm/token",
+							"host": ["{{base_url}}"],
+							"path": ["fcm", "token"]
+						}
+					}
+				},
+				{
+					"name": "Send Notification",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"Notification Title\",\n    \"body\": \"Notification body message\",\n    \"fcm_token\": \"fcm_token_here\",\n    \"data\": {\n        \"key1\": \"value1\",\n        \"key2\": \"value2\"\n    }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/fcm/send",
+							"host": ["{{base_url}}"],
+							"path": ["fcm", "send"]
+						}
+					}
+				}
+			]
+		}
+	]
+}

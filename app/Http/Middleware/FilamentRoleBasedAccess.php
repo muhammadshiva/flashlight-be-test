@@ -25,6 +25,8 @@ class FilamentRoleBasedAccess
 
         // Log the current path for debugging
         \Illuminate\Support\Facades\Log::info('Current path: ' . $path);
+        \Illuminate\Support\Facades\Log::info('User type: ' . $user->type);
+        \Illuminate\Support\Facades\Log::info('User roles: ' . $user->roles->pluck('name')->implode(', '));
 
         // Always allow access to authentication paths (logout, profile, etc)
         if (
@@ -40,56 +42,24 @@ class FilamentRoleBasedAccess
             abort(403, 'Staff and customers cannot access the admin dashboard');
         }
 
-        // Owner type can do everything
-        if ($user->type === User::TYPE_OWNER) {
+        // Owner and Admin types can access everything in admin panel
+        if ($user->type === User::TYPE_OWNER || $user->type === User::TYPE_ADMIN) {
             return $next($request);
         }
 
-        // Admin type restrictions
-        if ($user->type === User::TYPE_ADMIN) {
-            // Admin can't create, edit, or delete wash transactions
-            if (
-                str_contains($path, 'admin/wash-transactions/create') ||
-                (str_contains($path, 'admin/wash-transactions/') && str_contains($path, '/edit'))
-            ) {
-                abort(403, 'Admins cannot create or edit wash transactions');
-            }
-
-            return $next($request);
-        }
-
-        // Cashier type restrictions
+        // Cashier type restrictions - only allow limited access
         if ($user->type === User::TYPE_CASHIER) {
-            // Handle dashboard access specifically
-            if ($path === 'admin' || $path === 'admin/dashboard') {
-                return $next($request);
-            }
-
-            // Allow access to wash-transactions index
-            if ($path === 'admin/wash-transactions') {
-                return $next($request);
-            }
-
-            // Allow access to view individual wash transaction
-            if (preg_match('#^admin/wash-transactions/\d+$#', $path)) {
-                return $next($request);
-            }
-
-            // Block access to create, edit or delete operations
+            // Allow access to dashboard and wash transactions
             if (
-                str_contains($path, '/create') ||
-                str_contains($path, '/edit') ||
-                str_contains($path, '/delete')
+                $path === 'admin' ||
+                $path === 'admin/dashboard' ||
+                str_starts_with($path, 'admin/wash-transactions')
             ) {
-                abort(403, 'Cashiers can only view transactions');
+                return $next($request);
             }
 
             // Block access to all other resources
-            if (!str_starts_with($path, 'admin/wash-transactions')) {
-                abort(403, 'Cashiers can only access transactions');
-            }
-
-            return $next($request);
+            abort(403, 'Cashiers can only access dashboard and wash transactions');
         }
 
         return $next($request);

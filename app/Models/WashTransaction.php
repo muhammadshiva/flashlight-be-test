@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class WashTransaction extends Model
@@ -17,11 +18,18 @@ class WashTransaction extends Model
     const STATUS_IN_PROGRESS = 'in_progress';
     const STATUS_COMPLETED = 'completed';
     const STATUS_CANCELLED = 'cancelled';
+
+    // Service Status Constants
+    const SERVICE_STATUS_WAITING = 'waiting';
+    const SERVICE_STATUS_IN_SERVICE = 'in_service';
+    const SERVICE_STATUS_COMPLETED = 'completed';
+    const SERVICE_STATUS_CANCELLED = 'cancelled';
     const PAYMENT_METHOD_CASH = 'cash';
     const PAYMENT_METHOD_CASHLESS = 'cashless';
     const PAYMENT_METHOD_TRANSFER = 'transfer';
 
     protected $fillable = [
+        'work_order_id',
         'customer_id',
         'customer_vehicle_id',
         'product_id',
@@ -31,13 +39,19 @@ class WashTransaction extends Model
         'payment_method',
         'wash_date',
         'status',
+        'service_status',
         'notes',
         'transaction_number',
+        'service_started_at',
+        'service_completed_at',
+        'queue_number',
     ];
 
     protected $casts = [
         'wash_date' => 'datetime',
         'total_price' => 'float',
+        'service_started_at' => 'datetime',
+        'service_completed_at' => 'datetime',
     ];
 
     protected static function booted()
@@ -102,6 +116,16 @@ class WashTransaction extends Model
         return $this->hasMany(Payment::class);
     }
 
+    public function workOrder(): BelongsTo
+    {
+        return $this->belongsTo(WorkOrder::class);
+    }
+
+    public function posTransaction(): HasOne
+    {
+        return $this->hasOne(POSTransaction::class);
+    }
+
     public function isPending(): bool
     {
         return $this->status === self::STATUS_PENDING;
@@ -154,5 +178,75 @@ class WashTransaction extends Model
             self::PAYMENT_METHOD_CASHLESS => 'Cashless',
             self::PAYMENT_METHOD_TRANSFER => 'Transfer',
         ];
+    }
+
+    // Service Status Methods
+    public function isWaiting(): bool
+    {
+        return $this->service_status === self::SERVICE_STATUS_WAITING;
+    }
+
+    public function isInService(): bool
+    {
+        return $this->service_status === self::SERVICE_STATUS_IN_SERVICE;
+    }
+
+    public function isServiceCompleted(): bool
+    {
+        return $this->service_status === self::SERVICE_STATUS_COMPLETED;
+    }
+
+    public function isServiceCancelled(): bool
+    {
+        return $this->service_status === self::SERVICE_STATUS_CANCELLED;
+    }
+
+    public function hasPayment(): bool
+    {
+        return $this->posTransaction !== null;
+    }
+
+    public function isFromWorkOrder(): bool
+    {
+        return $this->work_order_id !== null;
+    }
+
+    public static function getServiceStatusOptions(): array
+    {
+        return [
+            self::SERVICE_STATUS_WAITING => 'Waiting',
+            self::SERVICE_STATUS_IN_SERVICE => 'In Service',
+            self::SERVICE_STATUS_COMPLETED => 'Service Completed',
+            self::SERVICE_STATUS_CANCELLED => 'Service Cancelled',
+        ];
+    }
+
+    public static function generateQueueNumber(): int
+    {
+        $today = now()->format('Y-m-d');
+
+        $lastQueue = static::whereDate('wash_date', $today)
+            ->whereNotNull('queue_number')
+            ->orderBy('queue_number', 'desc')
+            ->first();
+
+        return $lastQueue ? $lastQueue->queue_number + 1 : 1;
+    }
+
+    public function startService(): void
+    {
+        $this->update([
+            'service_status' => self::SERVICE_STATUS_IN_SERVICE,
+            'service_started_at' => now(),
+            'status' => self::STATUS_IN_PROGRESS,
+        ]);
+    }
+
+    public function completeService(): void
+    {
+        $this->update([
+            'service_status' => self::SERVICE_STATUS_COMPLETED,
+            'service_completed_at' => now(),
+        ]);
     }
 }

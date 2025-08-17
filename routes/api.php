@@ -12,6 +12,8 @@ use App\Http\Controllers\Api\VehicleController;
 use App\Http\Controllers\Api\WashTransactionController;
 use App\Http\Controllers\Api\TransactionPaymentController;
 use App\Http\Controllers\Api\ShiftController;
+use App\Http\Controllers\Api\WorkOrderController;
+use App\Http\Controllers\Api\POSTransactionController;
 use App\Http\Controllers\FCMController;
 use App\Http\Controllers\FcmTokenController;
 
@@ -142,7 +144,64 @@ Route::middleware('auth:sanctum')->group(function () {
     });
     /*
     |--------------------------------------------------------------------------
-    | Wash Transaction Routes
+    | Work Order Routes (Self Ordering Kiosk)
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('work-orders')->group(function () {
+        Route::get('/', [WorkOrderController::class, 'index']);
+        Route::post('/', [WorkOrderController::class, 'store']);
+        Route::get('/queue', [WorkOrderController::class, 'getQueue']);
+        Route::get('/customer/{customerId}', [WorkOrderController::class, 'getByCustomerId']);
+        Route::get('/{workOrder}', [WorkOrderController::class, 'show']);
+        Route::put('/{workOrder}', [WorkOrderController::class, 'update']);
+        Route::delete('/{workOrder}', [WorkOrderController::class, 'destroy']);
+        Route::post('/{workOrder}/confirm', [WorkOrderController::class, 'confirm']); // Creates wash transaction
+        Route::post('/{workOrder}/cancel', [WorkOrderController::class, 'cancel']);
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | POS Transaction Routes (Point of Sales)
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('pos-transactions')->group(function () {
+        Route::get('/', [POSTransactionController::class, 'index']);
+        Route::post('/', [POSTransactionController::class, 'store']); // Direct sales
+        Route::get('/customer/{customerId}', [POSTransactionController::class, 'getByCustomerId']);
+        Route::get('/sales-report', [POSTransactionController::class, 'getDailySalesReport']);
+        Route::get('/{posTransaction}', [POSTransactionController::class, 'show']);
+        Route::put('/{posTransaction}', [POSTransactionController::class, 'update']);
+        Route::delete('/{posTransaction}', [POSTransactionController::class, 'destroy']);
+
+        // Payment processing routes
+        Route::post('/wash-transaction/{washTransaction}/payment', [POSTransactionController::class, 'processWashTransactionPayment']);
+        Route::post('/work-order/{workOrder}/payment', [POSTransactionController::class, 'processWorkOrderPayment']); // Backward compatibility
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Wash Transaction Routes (Service Management)
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('wash-transactions')->group(function () {
+        Route::get('/', [WashTransactionController::class, 'index']);
+        Route::get('/customer/{customerId}', [WashTransactionController::class, 'getByCustomerId']);
+        Route::post('/', [WashTransactionController::class, 'store']); // Direct wash transaction
+        Route::get('/service-queue', [WashTransactionController::class, 'getServiceQueue']);
+        Route::get('/{washTransaction}', [WashTransactionController::class, 'show']);
+        Route::put('/{washTransaction}', [WashTransactionController::class, 'update']);
+        Route::delete('/{washTransaction}', [WashTransactionController::class, 'destroy']);
+
+        // Service management routes
+        Route::post('/{washTransaction}/start-service', [WashTransactionController::class, 'startService']);
+        Route::post('/{washTransaction}/complete-service', [WashTransactionController::class, 'completeService']);
+        Route::post('/{washTransaction}/complete', [WashTransactionController::class, 'complete']); // Backward compatibility
+        Route::post('/{washTransaction}/cancel', [WashTransactionController::class, 'cancel']);
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Legacy Transaction Routes (Backward Compatibility)
     |--------------------------------------------------------------------------
     */
     Route::prefix('transactions')->group(function () {

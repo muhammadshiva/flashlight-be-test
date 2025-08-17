@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\WashTransaction;
+use App\Models\WorkOrder;
 use App\Models\Product;
 use App\Models\Customer;
 use App\Models\Shift;
@@ -21,12 +22,14 @@ class WashTransactionController extends Controller
     {
         try {
             $query = WashTransaction::with([
+                'workOrder',
                 'customer.user',
                 'customerVehicle',
                 'primaryProduct',
                 'products',
                 'user',
-                'shift'
+                'shift',
+                'posTransaction'
             ]);
 
             // Filter by shift_id if provided
@@ -410,6 +413,101 @@ class WashTransactionController extends Controller
                 'date' => now()->format('Y-m-d'),
                 'sequence' => $sequence
             ], 'Next transaction number generated successfully');
+        } catch (Exception $e) {
+            return $this->handleException($e);
+        }
+    }
+
+    /**
+     * Start service for wash transaction
+     */
+    public function startService(WashTransaction $washTransaction)
+    {
+        try {
+            if ($washTransaction->isInService()) {
+                return $this->errorResponse('Service is already in progress', 400);
+            }
+
+            if ($washTransaction->isServiceCompleted()) {
+                return $this->errorResponse('Service is already completed', 400);
+            }
+
+            $washTransaction->startService();
+
+            return $this->successResponse(
+                $washTransaction->load([
+                    'workOrder',
+                    'customer.user',
+                    'customerVehicle',
+                    'products',
+                    'user',
+                    'shift',
+                    'posTransaction'
+                ]),
+                'Service started successfully'
+            );
+        } catch (Exception $e) {
+            return $this->handleException($e);
+        }
+    }
+
+    /**
+     * Complete service for wash transaction
+     */
+    public function completeService(WashTransaction $washTransaction)
+    {
+        try {
+            if (!$washTransaction->isInService()) {
+                return $this->errorResponse('Service must be in progress to complete', 400);
+            }
+
+            $washTransaction->completeService();
+
+            return $this->successResponse(
+                $washTransaction->load([
+                    'workOrder',
+                    'customer.user',
+                    'customerVehicle',
+                    'products',
+                    'user',
+                    'shift',
+                    'posTransaction'
+                ]),
+                'Service completed successfully'
+            );
+        } catch (Exception $e) {
+            return $this->handleException($e);
+        }
+    }
+
+    /**
+     * Get queue information for wash transactions
+     */
+    public function getServiceQueue()
+    {
+        try {
+            $today = now()->format('Y-m-d');
+
+            $queue = WashTransaction::with([
+                'workOrder',
+                'customer.user',
+                'customerVehicle.vehicle'
+            ])
+                ->whereDate('wash_date', $today)
+                ->whereIn('service_status', [
+                    WashTransaction::SERVICE_STATUS_WAITING,
+                    WashTransaction::SERVICE_STATUS_IN_SERVICE
+                ])
+                ->orderBy('queue_number')
+                ->get();
+
+            return $this->successResponse([
+                'queue' => $queue,
+                'total_queue' => $queue->count(),
+                'waiting' => $queue->where('service_status', WashTransaction::SERVICE_STATUS_WAITING)->count(),
+                'in_service' => $queue->where('service_status', WashTransaction::SERVICE_STATUS_IN_SERVICE)->count(),
+                'date' => $today
+            ], 'Service queue information retrieved successfully');
         } catch (Exception $e) {
             return $this->handleException($e);
         }

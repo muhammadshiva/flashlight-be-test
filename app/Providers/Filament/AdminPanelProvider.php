@@ -5,6 +5,7 @@ namespace App\Providers\Filament;
 use App\Filament\Resources\CustomerResource;
 use App\Filament\Resources\CustomerVehicleResource;
 use App\Filament\Resources\MembershipTypeResource;
+use App\Filament\Resources\POSTransactionResource;
 use App\Filament\Resources\ProductCategoryResource;
 use App\Filament\Resources\ProductResource;
 use App\Filament\Resources\StaffResource;
@@ -61,7 +62,8 @@ class AdminPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
-                CashierAccess::class,
+                // Temporarily disabled to test access
+                // \App\Http\Middleware\FilamentRoleBasedAccess::class,
             ])
             ->authMiddleware([
                 Authenticate::class,
@@ -76,6 +78,7 @@ class AdminPanelProvider extends PanelProvider
                 CustomerResource::class,
                 CustomerVehicleResource::class,
                 MembershipTypeResource::class,
+                POSTransactionResource::class,
                 ProductCategoryResource::class,
                 ProductResource::class,
                 StaffResource::class,

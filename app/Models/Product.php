@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Product extends Model
 {
@@ -55,5 +56,12 @@ class Product extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(ProductCategory::class, 'category_id');
+    }
+
+    public function posTransactions(): BelongsToMany
+    {
+        return $this->belongsToMany(POSTransaction::class, 'pos_transaction_products')
+            ->withPivot(['quantity', 'price', 'subtotal'])
+            ->withTimestamps();
     }
 }

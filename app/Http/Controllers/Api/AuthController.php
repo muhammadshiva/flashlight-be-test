@@ -67,8 +67,8 @@ class AuthController extends Controller
             $request->validate([
                 'email' => ['required', 'string', 'email'],
                 'password' => ['required', 'string'],
-                'fcm_token' => ['required', 'string', 'min:50'], // Make FCM token required with minimum length
-                'device_id' => ['required', 'string'], // Device identifier
+                'fcm_token' => ['nullable', 'string', 'min:50'], // Make FCM token optional with minimum length
+                'device_id' => ['nullable', 'string'], // Device identifier (optional)
                 'device_name' => ['nullable', 'string'],
                 'platform' => ['nullable', 'string'],
             ]);
@@ -79,34 +79,49 @@ class AuthController extends Controller
 
             $user = User::where('email', $request->email)->first();
 
-            // Store device FCM token (this will be used for all transactions)
-            $deviceToken = DeviceFcmToken::storeDeviceToken(
-                $request->device_id,
-                $request->fcm_token,
-                $user->id,
-                $request->device_name,
-                $request->platform
-            );
+            // Store device FCM token only if both fcm_token and device_id are provided
+            $deviceToken = null;
+            if ($request->fcm_token && $request->device_id) {
+                $deviceToken = DeviceFcmToken::storeDeviceToken(
+                    $request->device_id,
+                    $request->fcm_token,
+                    $user->id,
+                    $request->device_name,
+                    $request->platform
+                );
+            }
 
-            // Still update user FCM token for backward compatibility
-            $user->update([
-                'fcm_token' => $request->fcm_token,
-                'last_login_at' => now(),
-            ]);
+            // Update user FCM token only if provided, for backward compatibility
+            $updateData = ['last_login_at' => now()];
+            if ($request->fcm_token) {
+                $updateData['fcm_token'] = $request->fcm_token;
+            }
+
+            $user->update($updateData);
 
             $user->load(['customer', 'staff', 'customer.membershipType']);
 
             $accessToken = $user->createToken('access_token')->plainTextToken;
             $refreshToken = $user->createToken('refresh_token')->plainTextToken;
 
-            return $this->successResponse([
+            $responseData = [
                 'user' => new UserResource($user),
                 'access_token' => $accessToken,
                 'refresh_token' => $refreshToken,
-                'fcm_token_updated' => true,
-                'device_token_stored' => true,
-                'device_id' => $request->device_id,
-            ], 'User logged in successfully and device FCM token stored');
+                'fcm_token_updated' => !empty($request->fcm_token),
+                'device_token_stored' => !is_null($deviceToken),
+            ];
+
+            if ($request->device_id) {
+                $responseData['device_id'] = $request->device_id;
+            }
+
+            $message = 'User logged in successfully';
+            if (!empty($request->fcm_token) && !empty($request->device_id)) {
+                $message .= ' and device FCM token stored';
+            }
+
+            return $this->successResponse($responseData, $message);
         } catch (Exception $e) {
             return $this->handleException($e);
         }

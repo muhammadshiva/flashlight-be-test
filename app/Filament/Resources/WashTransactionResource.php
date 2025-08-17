@@ -6,6 +6,7 @@ use App\Filament\Resources\WashTransactionResource\Pages;
 use App\Filament\Resources\WashTransactionResource\RelationManagers;
 use App\Models\User;
 use App\Models\WashTransaction;
+use App\Models\WorkOrder;
 use App\Models\Product;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -25,54 +26,90 @@ class WashTransactionResource extends Resource
 
     protected static ?string $navigationLabel = 'Wash Transactions';
 
+    protected static ?string $navigationGroup = 'Service Management';
+
+    protected static ?int $navigationSort = 3;
+
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\Select::make('customer_id')
-                    ->relationship('customer', 'id', fn($query) => $query->with('user'))
-                    ->getOptionLabelFromRecordUsing(fn($record) => $record->user->name)
-                    ->searchable(['user.name'])
-                    ->preload()
-                    ->required()
-                    ->label('Customer'),
-                Forms\Components\Select::make('customer_vehicle_id')
-                    ->relationship('customerVehicle', 'license_plate')
-                    ->searchable()
-                    ->preload()
-                    ->required()
-                    ->label('Vehicle'),
-                Forms\Components\Select::make('product_id')
-                    ->label('Primary Product')
-                    ->options(Product::pluck('name', 'id'))
-                    ->searchable()
-                    ->preload()
-                    ->nullable()
-                    ->helperText('Optional: Select a primary product for this transaction'),
-                Forms\Components\Select::make('user_id')
-                    ->relationship('user', 'name')
-                    ->searchable()
-                    ->preload()
-                    ->required()
-                    ->label('User'),
-                Forms\Components\Select::make('payment_method')
-                    ->options(WashTransaction::getPaymentMethodOptions())
-                    ->required()
-                    ->label('Payment Method'),
-                Forms\Components\DateTimePicker::make('wash_date')
-                    ->required()
-                    ->label('Wash Date'),
-                Forms\Components\Select::make('status')
-                    ->options(WashTransaction::getStatusOptions())
-                    ->required()
-                    ->default(WashTransaction::STATUS_PENDING)
-                    ->label('Status'),
-                Forms\Components\Textarea::make('notes')
-                    ->label('Notes')
-                    ->columnSpanFull(),
+                Forms\Components\Section::make('Transaction Information')
+                    ->schema([
+                        Forms\Components\TextInput::make('transaction_number')
+                            ->label('Transaction Number')
+                            ->disabled()
+                            ->dehydrated(false)
+                            ->visible(fn($record) => $record !== null),
+
+                        Forms\Components\Select::make('work_order_id')
+                            ->label('Work Order')
+                            ->relationship('workOrder', 'order_number')
+                            ->searchable()
+                            ->preload()
+                            ->nullable(),
+
+                        Forms\Components\Select::make('customer_id')
+                            ->relationship('customer', 'id', fn($query) => $query->with('user'))
+                            ->getOptionLabelFromRecordUsing(fn($record) => $record->user->name)
+                            ->searchable(['user.name'])
+                            ->preload()
+                            ->required()
+                            ->label('Customer'),
+
+                        Forms\Components\Select::make('customer_vehicle_id')
+                            ->relationship('customerVehicle', 'license_plate')
+                            ->searchable()
+                            ->preload()
+                            ->required()
+                            ->label('Vehicle'),
+
+                        Forms\Components\Select::make('product_id')
+                            ->label('Primary Product')
+                            ->options(Product::pluck('name', 'id'))
+                            ->searchable()
+                            ->preload()
+                            ->nullable()
+                            ->helperText('Optional: Select a primary product for this transaction'),
+
+                        Forms\Components\Select::make('user_id')
+                            ->relationship('user', 'name')
+                            ->searchable()
+                            ->preload()
+                            ->required()
+                            ->label('User'),
+
+                        Forms\Components\Select::make('payment_method')
+                            ->options(WashTransaction::getPaymentMethodOptions())
+                            ->required()
+                            ->label('Payment Method'),
+
+                        Forms\Components\DateTimePicker::make('wash_date')
+                            ->required()
+                            ->label('Wash Date'),
+
+                        Forms\Components\Select::make('status')
+                            ->options(WashTransaction::getStatusOptions())
+                            ->required()
+                            ->default(WashTransaction::STATUS_PENDING)
+                            ->label('Status'),
+
+                        Forms\Components\Select::make('service_status')
+                            ->options(WashTransaction::getServiceStatusOptions())
+                            ->required()
+                            ->default(WashTransaction::SERVICE_STATUS_WAITING)
+                            ->label('Service Status'),
+
+                        Forms\Components\Textarea::make('notes')
+                            ->label('Notes')
+                            ->columnSpanFull(),
+                    ])
+                    ->columns(2),
+
                 Forms\Components\Section::make('Products')
                     ->schema([
                         Forms\Components\Repeater::make('products')
+                            ->relationship()
                             ->schema([
                                 Forms\Components\Select::make('product_id')
                                     ->label('Product')
@@ -84,47 +121,50 @@ class WashTransactionResource extends Resource
                                     ->afterStateUpdated(function ($state, callable $set) {
                                         if ($state) {
                                             $product = Product::find($state);
-                                            $set('price', number_format($product->price, 2, '.', ''));
-                                            $set('subtotal', number_format($product->price, 2, '.', ''));
+                                            $quantity = 1;
+                                            $price = $product->price;
+                                            $set('price', $price);
+                                            $set('subtotal', $price * $quantity);
                                         }
                                     }),
+
                                 Forms\Components\TextInput::make('quantity')
                                     ->numeric()
                                     ->default(1)
                                     ->required()
                                     ->minValue(1)
                                     ->reactive()
-                                    ->afterStateUpdated(function ($state, callable $set, $get) {
+                                    ->afterStateUpdated(function ($state, callable $set, callable $get) {
                                         $price = $get('price');
-                                        if ($price) {
-                                            $subtotal = $price * $state;
-                                            $set('subtotal', number_format($subtotal, 2, '.', ''));
+                                        if ($price && $state) {
+                                            $set('subtotal', $price * $state);
                                         }
                                     })
                                     ->label('Quantity'),
+
                                 Forms\Components\TextInput::make('price')
                                     ->numeric()
                                     ->required()
                                     ->disabled()
+                                    ->dehydrated()
                                     ->label('Price'),
+
                                 Forms\Components\TextInput::make('subtotal')
                                     ->numeric()
                                     ->required()
                                     ->disabled()
+                                    ->dehydrated()
                                     ->label('Subtotal'),
                             ])
                             ->columns(4)
                             ->defaultItems(1)
                             ->minItems(1)
-                            ->reorderable(false)
-                            ->columnSpanFull()
-                            ->live()
-                            ->afterStateUpdated(function ($state, callable $set) {
-                                $total = collect($state)->sum(function ($item) {
-                                    return floatval($item['subtotal'] ?? 0);
-                                });
-                                $set('total_price', number_format($total, 2, '.', ''));
-                            }),
+                            ->addActionLabel('Add Product')
+                            ->deleteAction(
+                                fn(\Filament\Forms\Components\Actions\Action $action) => $action
+                                    ->requiresConfirmation()
+                            ),
+
                         Forms\Components\TextInput::make('total_price')
                             ->numeric()
                             ->required()

@@ -13,7 +13,7 @@ class Middleware
     {
         // Global middleware
         $middleware->append([
-            \App\Http\Middleware\CashierAccess::class,
+            // Removed CashierAccess from global middleware as it was causing 403 errors
         ]);
 
         // Route middleware
