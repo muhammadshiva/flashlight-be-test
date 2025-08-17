@@ -89,6 +89,12 @@ class CashierPanelProvider extends PanelProvider
                             ->isActiveWhen(fn(): bool => request()->routeIs('filament.cashier.resources.wash-transactions.*'))
                             ->url(fn(): string => route('filament.cashier.resources.wash-transactions.index'))
                             ->sort(3),
+
+                        NavigationItem::make('Wash Status')
+                            ->icon('heroicon-o-clipboard-document-check')
+                            ->isActiveWhen(fn(): bool => request()->routeIs('filament.cashier.resources.wash-statuses.*'))
+                            ->url(fn(): string => route('filament.cashier.resources.wash-statuses.index'))
+                            ->sort(4),
                     ]);
             })
             ->databaseNotifications()

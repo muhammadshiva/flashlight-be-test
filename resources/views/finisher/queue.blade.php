@@ -102,12 +102,11 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
                 <div class="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-4">
-                    <div class="flex items-center space-x-2">
-                        <i class="fas fa-car text-yellow-500 text-2xl"></i>
+                    <div class="flex flex-col items-center sm:items-start">
                         <h1 class="text-xl sm:text-2xl font-bold text-white">FLASHLIGHT CLEANSTAR</h1>
-                    </div>
-                    <div class="text-sm text-gray-300 text-center sm:text-left">
-                        THE BEST STAR TO SERVICE ★ ★ ★
+                        <div class="text-sm text-gray-300 text-center sm:text-left">
+                            THE BEST STAR TO SERVICE ★ ★ ★
+                        </div>
                     </div>
                 </div>
 

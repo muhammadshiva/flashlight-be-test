@@ -21,8 +21,7 @@ class FinisherQueueController extends Controller
         ])
             ->whereIn('status', [
                 WashTransaction::STATUS_PENDING,
-                WashTransaction::STATUS_IN_PROGRESS,
-                WashTransaction::STATUS_COMPLETED
+                WashTransaction::STATUS_IN_PROGRESS
             ])
             ->orderBy('wash_date', 'asc')
             ->get()
@@ -80,8 +79,7 @@ class FinisherQueueController extends Controller
         ])
             ->whereIn('status', [
                 WashTransaction::STATUS_PENDING,
-                WashTransaction::STATUS_IN_PROGRESS,
-                WashTransaction::STATUS_COMPLETED
+                WashTransaction::STATUS_IN_PROGRESS
             ])
             ->orderBy('wash_date', 'asc')
             ->get()
